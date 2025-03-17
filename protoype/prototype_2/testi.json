@@ -1,0 +1,110 @@
+{
+	"project_name": "ollama-deep-researcher",
+    "content": {
+        "file_1": {
+            "file_name": ".env.example",
+            "tags": ["configuration", "environment", "API"],
+            "sum": "Example environment configuration file for setting up API keys and model parameters.",
+            "code": [
+                "OLLAMA_BASE_URL= # Defaults to http://localhost:11434 if not set",
+                "SEARCH_API= # Defines the web search service to use",
+                "TAVILY_API_KEY=tvly-xxxxx # API key for Tavily search service"
+            ]
+        },
+        "file_2": {
+            "file_name": "Dockerfile",
+            "tags": ["Docker", "Python", "Ollama"],
+            "sum": "Defines a Docker container for a Python-based research assistant using LangGraph and Ollama.",
+            "code": [
+              "FROM python:3.11-slim-buster",
+              "RUN curl -LsSf https://astral.sh/uv/install.sh | sh",
+              "CMD [\"uvx\", \"--refresh\", \"--from\", \"langgraph-cli[inmem]\", \"--with-editable\", \".\", \"--python\", \"3.11\", \"langgraph\", \"dev\", \"--host\", \"0.0.0.0\"]"
+            ]
+        },
+        "file_3": {
+            "file_name": "langgraph.json",
+            "tags": ["configuration", "dependency-management", "graph-processing"],
+            "sum": "Defines project dependencies, environment, and graph processing entry point.",
+            "code": [
+              "\"graphs\": { \"ollama_deep_researcher\": \"./src/assistant/graph.py:graph\" }",
+              "\"python_version\": \"3.11\"",
+              "\"env\": \"./.env\""
+            ]
+        },
+        "file_4": {
+            "file_name": "pyproject.toml",
+            "tags": ["Python", "Project Configuration", "Build System"],
+            "sum": "Project configuration file defining metadata, dependencies, and build system settings.",
+            "code": [
+                "[project]\nname = \"ollama-deep-researcher\"\nversion = \"0.0.1\"\ndescription = \"Lightweight web research and summarization assistant.\"\nrequires-python = \">=3.9\"",
+                "dependencies = [\n    \"langgraph>=0.2.55\",\n    \"langchain-community>=0.3.9\",\n    \"tavily-python>=0.5.0\",\n    \"langchain-ollama>=0.2.1\",\n    \"duckduckgo-search>=7.3.0\",\n    \"beautifulsoup4>=4.13.3\"\n]",
+                "[build-system]\nrequires = [\"setuptools>=73.0.0\", \"wheel\"]\nbuild-backend = \"setuptools.build_meta\""
+            ]
+        },
+        "file_5": {
+            "file_name": "__init__.py",
+            "tags": ["initialization", "module-setup", "python"],
+            "sum": "Handles module initialization and setup.",
+            "code": []
+        },
+        "file_6": {
+            "file_name": "configuration.py",
+            "tags": ["configuration", "environment-variables", "research-assistant"],
+            "sum": "Defines configuration parameters using environment variables and dataclass.",
+            "code": [
+                "class SearchAPI(Enum):",
+                "@dataclass(kw_only=True) class Configuration:",
+                "@classmethod def from_runnable_config(cls, config: Optional[RunnableConfig] = None) -> \"Configuration\":"
+            ]
+        },
+        "file_7": {
+            "tags": ["StateGraph", "web-research", "query-generation"],
+            "sum": "Defines a state graph for handling web research tasks, including query generation, research gathering, summarization, and routing based on user input and configuration.",
+            "code": [
+                "def generate_query(state: SummaryState, config: RunnableConfig): { return {\"search_query\": query['query']}}",
+                "def web_research(state: SummaryState, config: RunnableConfig): { return {\"sources_gathered\": [formatted_sources], \"web_research_results\": [search_str]}}",
+                "def summarize_sources(state: SummaryState, config: RunnableConfig): { return {\"running_summary\": result.content}}"
+            ]
+        },
+        "file_8": {
+            "file_name": "prompts.py",
+            "tags": ["web-search-query", "summary-creation", "knowledge-gap-analysis"],
+            "sum": "Contains instructions for generating search queries, creating summaries, and analyzing knowledge gaps.",
+            "code": [
+                "\"query\": \"machine learning transformer architecture explained\"",
+                "\"knowledge_gap\": \"The summary lacks information about performance metrics and benchmarks\"",
+                "\"follow_up_query\": \"What are typical performance benchmarks and metrics used to evaluate [specific technology]?\""
+            ]
+        },
+        "file_9": {
+            "file_name": "state.py",
+            "tags": ["dataclasses", "state-management", "typing"],
+            "sum": "Defines states and input-output structure for managing research process.",
+            "code": [
+                "class SummaryState:\n    research_topic: str = field(default=None)\n    search_query: str = field(default=None)\n    web_research_results: Annotated[list, operator.add] = field(default_factory=list)",
+                "class SummaryStateInput:\n    research_topic: str = field(default=None)",
+                "class SummaryStateOutput:\n    running_summary: str = field(default=None)"
+            ]
+        },
+        "file_10": {
+            "file_name": "utils.py",
+            "tags": ["search", "utilities", "web-scraping"],
+            "sum": "Provides search utilities for Tavily, DuckDuckGo, and Perplexity APIs. Formats and deduplicates search results.",
+            "code": [
+                "def deduplicate_and_format_sources(search_response, max_tokens_per_source, include_raw_content=False):",
+                "def duckduckgo_search(query: str, max_results: int = 3, fetch_full_page: bool = False):",
+                "def tavily_search(query, include_raw_content=True, max_results=3):"
+            ]
+        },
+        "file_11": {
+            "file_name": "docker-image.yml",
+            "tags": ["CI/CD", "Docker", "GitHub Actions"],
+            "sum": "Defines CI workflow for Docker image build and push.",
+            "code": [
+                "steps:\n      - name: Checkout repository\n        uses: actions/checkout@v4",
+                "steps:\n      - name: Setup Docker buildx\n        uses: docker/setup-buildx-action@v3",
+                "steps:\n      - name: Build and push Docker image\n        id: build-and-push\n        uses: docker/build-push-action@v5\n        with:\n          platforms: linux/amd64,linux/arm64\n          push: true\n          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            ]
+        }
+    }
+}

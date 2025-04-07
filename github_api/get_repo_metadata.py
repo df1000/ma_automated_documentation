@@ -22,8 +22,8 @@ def get_response(page):
     response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
     if response.status_code != 200:
         print(f'Error with response. Check out status_code {response.status_code}!')
-        # add page with wrong response code to list
-        pages_with_no_response.append(page)
+
+        return page
     else:
         # save response in variable 
         data = response.json()
@@ -46,7 +46,12 @@ for page in range(0, num_of_pages+1):
     # set sleeper
     random_number = random.randint(2,6)
     time.sleep(random_number)
-    get_response(page)
+    
+    if get_response(page) == None:
+        continue
+    else:
+        # add page with wrong response code to list
+        pages_with_no_response.append(page)
     # # set url
     # url_multiple_repos = f'https://api.github.com/search/repositories?q=language:python&page={page}'
     # # send request

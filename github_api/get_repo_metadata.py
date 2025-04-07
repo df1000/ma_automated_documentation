@@ -30,7 +30,7 @@ def get_response(page):
         # set timestamp as str
         timestamp = datetime.now(tz=None).strftime('%Y-%m-%d_%H-%H-%S')
         # save data from response as json in data/
-        with open(f'../data/{page}_multiple_github_repos_page_{timestamp}.json', 'w') as file:
+        with open(f'../data/raw_data/{page}_multiple_github_repos_page_{timestamp}.json', 'w') as file:
             json.dump(data, file)
 
 
@@ -71,7 +71,7 @@ else:
 
 pages_with_no_response = tmp_list
 # save list for later analysis
-with open(f'../data/pages_with_wrong_response.json', 'w') as file:
+with open(f'../data/helper/pages_with_wrong_response.json', 'w') as file:
     json.dump(pages_with_no_response, file)
 
 

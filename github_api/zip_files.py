@@ -1,18 +1,17 @@
-import os
+import pathlib
 import zipfile
 
-# Specify the directory containing the files
-directory_path = "/path/to/directory"
-zip_file_name = "raw_data.zip"
+directory_path = pathlib.Path('../data/raw_data')
 
-# Create a zip file
-with zipfile.ZipFile(zip_file_name, 'w') as zipf:
-    # Iterate through all files in the directory
-    for filename in os.listdir(directory_path):
-        file_path = os.path.join(directory_path, filename)
-        # Check if it's a file (skip directories)
-        if os.path.isfile(file_path):
-            # Add the file to the zip archive
-            zipf.write(file_path, arcname=filename)
+if not directory_path.exists():
+    raise FileNotFoundError(f"Directory not found: {directory_path.resolve()}")
 
-print(f"All files in '{directory_path}' have been zipped into '{zip_file_name}'.")
+archive_path = pathlib.Path("../data/raw_data.zip")
+archive_path.parent.mkdir(parents=True, exist_ok=True)
+
+with zipfile.ZipFile(archive_path, mode="w") as archive:
+    for file_path in directory_path.iterdir():
+        archive.write(file_path, arcname=file_path.name)
+
+
+# in bash mit cd in github_api springen...keine ahnung warum

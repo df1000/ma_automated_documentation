@@ -1,7 +1,6 @@
 import requests
 import json
 from getpass import getpass
-import pandas as pd
 from datetime import datetime
 import time
 import random 
@@ -18,7 +17,8 @@ headers = {
 def get_response(page):
     # set url
     # url_multiple_repos = f'https://api.github.com/search/repositories?q=language:python&page={page}'
-    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..300000&page={page}'
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..300000&page={page}'
+    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..7184&page={page}'
     # send request
     response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
     if response.status_code != 200:

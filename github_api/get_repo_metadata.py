@@ -16,8 +16,9 @@ headers = {
 }
 
 def get_response(page):
-     # set url
-    url_multiple_repos = f'https://api.github.com/search/repositories?q=language:python&page={page}'
+    # set url
+    # url_multiple_repos = f'https://api.github.com/search/repositories?q=language:python&page={page}'
+    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..300000&page={page}'
     # send request
     response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
     if response.status_code != 200:

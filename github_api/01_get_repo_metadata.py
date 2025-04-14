@@ -4,7 +4,7 @@ from getpass import getpass
 from datetime import datetime
 import time
 import random 
-from ratelimit import limits
+from ratelimit import limits, sleep_and_retry
 
 # set ratelimit
 ONE_MINUTE = 60
@@ -18,99 +18,103 @@ headers = {
   'Authorization': f'Bearer {ACCESS_TOKEN}'
 }
 
+
+def set_sleeper(number=None):
+    # set sleeper
+    if number != None:
+        time.sleep(number)
+    random_number = random.randint(3,8)
+    time.sleep(random_number)
+
+
 @sleep_and_retry
-@limits(calls=29, period=ONE_MINUTE)
+@limits(calls=20, period=ONE_MINUTE)
 def get_response(stars):
     '''
     max number of request: 30 per minute
     '''
     # set url
-    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:{stars}'
+    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:{stars}..{stars+15}'
     # send request
     response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
     if response.status_code != 200:
         print(f'Error with response. Check out status_code {response.status_code}!')
+        rate_limit_remaining = int(response.headers.get('X-RateLimit-Remaining'))
+        if rate_limit_remaining <= 1:
+            set_sleeper(61)
+        return None
 
     else:
         # save response in variable 
         data = response.json()
-        data = data['items'][0]
+
+        try:
+            data = data['items'][-1]
+        except IndexError:
+            print('Index is out of range. Response got no data.')
+            # send second response with range
+            set_sleeper(3)
+            url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:{stars}..{stars+25}'
+            response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
+            if response.status_code != 200:
+                print(f'Error with response. Check out status_code {response.status_code}!')
+                return None
+
+            data = response.json()
+
+            try:
+                data = data['items'][-1]
+                print('Request with range find data.')
+            except IndexError:
+                print('Index is out of range. Response got no data.')
+                return None
+            
         # set timestamp as str
-        timestamp = datetime.now(tz=None).strftime('%Y-%m-%d_%H-%H-%S')
+        timestamp = datetime.now(tz=None).strftime('%Y-%m-%d_%H-%M-%S')
         data['importtimestamp'] = timestamp
 
         return data
-        # # save data from response as json in data/
-        # with open(f'../data/raw_data/{page}_multiple_github_repos_page_{timestamp}.json', 'w') as file:
-        #     json.dump(data, file)
 
-
-def set_sleeper():
-    # set sleeper
-    random_number = random.randint(4,8)
-    time.sleep(random_number)
 
 
 # https://api.github.com/search/repositories?q=language:python
 # repo: https://github.com/public-apis/public-apis/ has max_num of stars = 335520 (request date: 2025-04-13)
 # for further work metadata of 1000 repos in total will be requested and saved
 max_stars = 22196
+start = 15372 #0
 step = 28
 # empty list for page numbers with no response
 stars_with_no_response = []
 repo_data = []
-num_of_request = 0
-check = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000]
+num_of_request = 551 #0
+check = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 768]
 
-while len(repo_data) <= 1050:
-    for stars in range(0, max_stars+1, step):
-        if stars > 22196:
-            break
-        #set_sleeper()    
-        data = get_response(stars)
-        num_of_request += 1
-        
-        if data == None:
-            # add page with wrong response code to list
-            stars_with_no_response.append(stars)
-            continue
-        else:
-            repo_data.append(data)
-            print(f'Repo for {stars} was successfully append to repo_data.')
-            if num_of_request in check:
-                with open(f'../data/raw_data/checkpoint_{num_of_request}_multiple_github_repos.json', 'w') as file:
-                    json.dump(repo_data, file)
-                
-                print(f'Checkpoint {num_of_request} was saved.')
+for stars in range(start, max_stars+1, step):
+    if stars > 22196:
+        break
+    set_sleeper()    
+    data = get_response(stars)
+    num_of_request += 1
+    
+    if data == None:
+        # add page with wrong response code to list
+        stars_with_no_response.append(stars)
+        continue
+    else:
+        repo_data.append(data)
+        print(f'Request nr. {num_of_request}: for repo with {stars} (+ up to 15-25) stars was successfully append to repo_data.')
+        if num_of_request in check:
+            with open(f'../data/raw_data/checkpoint_{num_of_request}_multiple_github_repos.json', 'w') as file:
+                json.dump(repo_data, file)
+            
+            print(f'Checkpoint {num_of_request} was saved.')
+            repo_data = []
 
     
-# save data from response as json in data/
-with open(f'../data/raw_data/multiple_github_repos.json', 'w') as file:
-    json.dump(repo_data, file)
 
-print('Json file is created')
+with open(f'../data/helper/stars_with_wrong_response.json', 'w') as file:
+    json.dump(stars_with_no_response, file)
 
-# if not stars_with_no_response:
-#     print(f'Response of a repo with {stars} stars was saved into the directory data.') 
-# else:
-#     # temporary list to store pages with no response
-#     tmp_list = []
-#     # check pages with no response again
-#     for page in stars_with_no_response:
-#         set_sleeper()
-#         if get_response(stars) is None:
-#             tmp_list.append(stars)
-#             continue
-#         # add page with wrong response code to list
-#         stars_with_no_response.append(stars)
-
-# if tmp_list is not None:
-#     pages_with_no_response = tmp_list
-#     # save list for later analysis
-#     with open(f'../data/helper/stars_with_wrong_response.json', 'w') as file:
-#         json.dump(stars_with_no_response, file)
-# else:
-#     print('Getting repository metadata is finished.')
 
 
     

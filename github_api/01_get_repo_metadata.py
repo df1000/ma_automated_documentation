@@ -18,7 +18,8 @@ headers = {
   'Authorization': f'Bearer {ACCESS_TOKEN}'
 }
 
-@limits(calls=30, period=ONE_MINUTE)
+@sleep_and_retry
+@limits(calls=29, period=ONE_MINUTE)
 def get_response(stars):
     '''
     max number of request: 30 per minute
@@ -59,28 +60,28 @@ step = 28
 stars_with_no_response = []
 repo_data = []
 num_of_request = 0
-check = [100, 200, 300, 400, 500, 600, 700, 800, 900]
+check = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000]
 
-for stars in range(0, max_stars+1, step):
-    if stars > 22196:
-        break
-
-    set_sleeper()    
-    data = get_response(stars)
-    num_of_request += 1
-    
-    if data == None:
-        # add page with wrong response code to list
-        stars_with_no_response.append(stars)
-        continue
-    else:
-        repo_data.append(data)
-        print(f'Repo for {stars} was successfully append to repo_data.')
-        if num_of_request in check:
-            with open(f'../data/raw_data/checkpoint_{num_of_request}_multiple_github_repos.json', 'w') as file:
-                json.dump(repo_data, file)
-            
-            print(f'Checkpoint {num_of_request} was saved.')
+while len(repo_data) <= 1050:
+    for stars in range(0, max_stars+1, step):
+        if stars > 22196:
+            break
+        #set_sleeper()    
+        data = get_response(stars)
+        num_of_request += 1
+        
+        if data == None:
+            # add page with wrong response code to list
+            stars_with_no_response.append(stars)
+            continue
+        else:
+            repo_data.append(data)
+            print(f'Repo for {stars} was successfully append to repo_data.')
+            if num_of_request in check:
+                with open(f'../data/raw_data/checkpoint_{num_of_request}_multiple_github_repos.json', 'w') as file:
+                    json.dump(repo_data, file)
+                
+                print(f'Checkpoint {num_of_request} was saved.')
 
     
 # save data from response as json in data/

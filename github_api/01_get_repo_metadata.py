@@ -18,13 +18,13 @@ headers = {
   'Authorization': f'Bearer {ACCESS_TOKEN}'
 }
 
-@limits(call=30, period=ONE_MINUTE)
+@limits(calls=30, period=ONE_MINUTE)
 def get_response(stars):
     '''
     max number of request: 30 per minute
     '''
     # set url
-    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:={stars}'
+    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:{stars}'
     # send request
     response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
     if response.status_code != 200:

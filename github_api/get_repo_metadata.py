@@ -1,7 +1,6 @@
 import requests
 import json
 from getpass import getpass
-import pandas as pd
 from datetime import datetime
 import time
 import random 
@@ -16,8 +15,25 @@ headers = {
 }
 
 def get_response(page):
-     # set url
-    url_multiple_repos = f'https://api.github.com/search/repositories?q=language:python&page={page}'
+    # set url
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python&page={page}' # no range
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..7193&page={page}' # repos with stars in range 0..7193
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..3954&page={page}' # repos with stars in range 0..3954
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..2784&page={page}' # repos with stars in range 0..2784
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:1500..2102&page={page}' # repos with stars in range 1500..2102 --> eher scheiße
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..2102&page={page}' # repos with stars in range 0..2102
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..1703&page={page}' # repos with stars in range 0..1703
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..1425&page={page}' # repos with stars in range 0..1425
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..1224&page={page}' # repos with stars in range 0..1224
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..1058&page={page}' # repos with stars in range 0..1058
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..936&page={page}' # repos with stars in range 0..936
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..842&page={page}' # repos with stars in range 0..842
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..768&page={page}' # repos with stars in range 0..768
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..705&page={page}' # repos with stars in range 0..705
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..650&page={page}' # repos with stars in range 0..650
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..604&page={page}' # repos with stars in range 0..604
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..564&page={page}' # repos with stars in range 0..604
+    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:>300000&page={page}' # repos with stars in range 0..604
     # send request
     response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
     if response.status_code != 200:
@@ -69,10 +85,13 @@ else:
         # add page with wrong response code to list
         pages_with_no_response.append(page)
 
-pages_with_no_response = tmp_list
-# save list for later analysis
-with open(f'../data/helper/pages_with_wrong_response.json', 'w') as file:
-    json.dump(pages_with_no_response, file)
+if tmp_list is not None:
+    pages_with_no_response = tmp_list
+    # save list for later analysis
+    with open(f'../data/helper/pages_with_wrong_response.json', 'w') as file:
+        json.dump(pages_with_no_response, file)
+else:
+    print('Getting repository metadata is finished.')
 
 
     

@@ -33,7 +33,8 @@ def get_response(page):
     # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..650&page={page}' # repos with stars in range 0..650
     # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..604&page={page}' # repos with stars in range 0..604
     # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:0..564&page={page}' # repos with stars in range 0..604
-    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:>300000&page={page}' # repos with stars in range 0..604
+    # url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:>300000&page={page}' # repos with stars in range 0..604
+    url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python&sort:asc&page={page}'
     # send request
     response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
     if response.status_code != 200:

@@ -15,6 +15,9 @@ headers = {
 }
 
 def get_response(stars):
+    '''
+    max number of request: 30 per minute
+    '''
     # set url
     url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:={stars}'
     # send request

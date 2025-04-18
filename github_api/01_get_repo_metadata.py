@@ -6,6 +6,7 @@ import time # package to set time ranges
 import random # package to work with random numbers
 from ratelimit import limits, sleep_and_retry # package for handling api requests
 
+
 # set ratelimit for requests
 ONE_MINUTE = 60
 
@@ -35,55 +36,56 @@ def set_sleeper(number=None):
     time.sleep(random_number) # script pause for random number
 
 
-@sleep_and_retry
-@limits(calls=20, period=ONE_MINUTE)
+@sleep_and_retry # set function in sleep until specified time periond of 1 minute is over
+@limits(calls=20, period=ONE_MINUTE) # limits number of requests to 20 per minute
 def get_response(stars, num_of_requests):
     '''
-    Function which sends request to search endpoint for repositories of GitHub api and saves the response as .json.
+    Function which sends request to search endpoint for repositories with a given number of stars for GitHub api and saves 
+    the response as .json.
 
     Args:
         stars: The number of stars of a repository.
-        num_of_requests: The number of 
+        num_of_requests: The number of request for tracking the process.
+
+    Return:
+        data
     '''
-    # set url
+    # set url for search endpoint with a range of to increase the propability of a postive response
     url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:{stars}..{stars+15}'
-    # send request
-    response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
-    if response.status_code != 200:
+    response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)# send GET request (1/2)
+    if response.status_code != 200: # check if status_code is not 200 to prevent time outs and banning from api
         print(f'Error with response. Check out status_code {response.status_code}!')
-        rate_limit_remaining = int(response.headers.get('X-RateLimit-Remaining'))
-        if rate_limit_remaining <= 1:
+        rate_limit_remaining = int(response.headers.get('X-RateLimit-Remaining')) # get remaining rate limit for requests
+        if rate_limit_remaining <= 1: # if rate limits are <= 1 call set_sleeper func and return None
             set_sleeper(61)
-        return None
+        return None 
 
     else:
-        # save response in variable 
-        data = response.json()
-
+        data = response.json() # save response in variable 
         try:
-            data = data['items'][-1]
-        except IndexError:
+            data = data['items'][-1] # get last element of .json
+            # why last element? request has a range and results are sorted desc
+            # i want the element with the lowest number of stars because it is closer to the defined step size
+        except IndexError: # expection for index error --> send second response with wider range
             print(f'For request {num_of_request} index is out of range. Response got no data.')
-            # send second response with range
-            set_sleeper(3)
-            url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:{stars}..{stars+25}'
-            response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload)
-            if response.status_code != 200:
+            set_sleeper(3) # call set_sleeper func to prevent pushing rate limits
+            url_multiple_repos  = f'https://api.github.com/search/repositories?q=language:python+stars:{stars}..{stars+25}' 
+            response = requests.request('GET', url=url_multiple_repos, headers=headers, data=payload) # send GET request (2/2)
+            if response.status_code != 200: # check if status_code is not 200 to prevent time outs and banning from api
                 print(f'Error with response. Check out status_code {response.status_code}!')
                 return None
 
-            data = response.json()
+            data = response.json() # save response in variable 
 
             try:
-                data = data['items'][-1]
+                data = data['items'][-1] # get last element of .json
                 print('Request with range find data.')
-            except IndexError:
+            except IndexError: # if another index error is raised return None and go to next iteration in for loop
                 print(f'For second try, the request {num_of_request} index is out of range. Response got no data.')
                 return None
             
-        # set timestamp as str
-        timestamp = datetime.now(tz=None).strftime('%Y-%m-%d_%H-%M-%S')
-        data['importtimestamp'] = timestamp
+        timestamp = datetime.now(tz=None).strftime('%Y-%m-%d_%H-%M-%S') # set timestamp as str for further analysis
+        data['importtimestamp'] = timestamp # add timestamp as key-value pair to data
 
         return data
 

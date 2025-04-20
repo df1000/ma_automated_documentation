@@ -1,3 +1,4 @@
+
 import requests
 import os
 from dotenv import load_dotenv
@@ -15,27 +16,20 @@ ONE_MINUTE = 60
 
 # set credentials and parameters for api requests
 ACCESS_TOKEN = os.environ['GIT_TOKEN']
-payload = {}
-headers = {
+PAYLOAD = {}
+HEADERS = {
   'Accept': 'application/vnd.github+json',
   'X-GitHub-Api-Version': '2022-11-28',
   'Authorization': f'Bearer {ACCESS_TOKEN}'
 }
 
-# open json as dataframe
-file_path = '../data/df_repos_metadata.json'
-with open(file_path, 'r') as file:
-    loaded_data = json.load(file)
-
-df = pd.DataFrame(data=loaded_data)
-repos = df['full_name'].tolist()
 
 @sleep_and_retry # set function in sleep until specified time periond of 1 minute is over
-@limits(calls=20, period=ONE_MINUTE) # limits number of requests to 20 per minute
+@limits(calls=30, period=ONE_MINUTE) # limits number of requests to 20 per minute
 def check_repo_for_readme(repo_owner, repo_name):
     url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/readme"
     
-    response = requests.get(url, headers=headers, data=payload)
+    response = requests.get(url, headers=HEADERS, data=PAYLOAD)
     if response.status_code == 404:
         print(f'Repo {repo_name} has no README.md.')
         return False
@@ -48,7 +42,7 @@ def check_repo_for_readme(repo_owner, repo_name):
 
 
 @sleep_and_retry # set function in sleep until specified time periond of 1 minute is over
-@limits(calls=20, period=ONE_MINUTE) # limits number of requests to 20 per minute
+@limits(calls=30, period=ONE_MINUTE) # limits number of requests to 20 per minute
 def download_github_repo(repo_owner, repo_name, refs):
 
     # https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#download-a-repository-archive-zip
@@ -57,7 +51,7 @@ def download_github_repo(repo_owner, repo_name, refs):
     url =   f'https://api.github.com/repos/{repo_owner}/{repo_name}/zipball/{refs}'
     
     # Send a request to the URL
-    response = requests.get(url, stream=True, headers=headers, data=payload)
+    response = requests.get(url, stream=True, headers=HEADERS, data=PAYLOAD)
     
     # Check if the request was successful
     if response.status_code == 200:
@@ -70,7 +64,15 @@ def download_github_repo(repo_owner, repo_name, refs):
         print(f"Failed to download repository. HTTP Status Code: {response.status_code}")
 
 
+# open json as dataframe
+file_path = '../data/df_repos_sample_250.json'
+with open(file_path, 'r') as file:
+    loaded_data = json.load(file)
 
+df = pd.DataFrame(data=loaded_data)
+repos = df['full_name'].tolist()
+
+num_of_repos = 0
 
 for repo in repos:
     repo_owner = repo.split('/')[0]
@@ -79,5 +81,9 @@ for repo in repos:
 
     if check_repo_for_readme(repo_owner, repo_name):
         download_github_repo(repo_owner, repo_name, refs) 
+        num_of_repos += 1
     else:
         continue
+
+    if num_of_repos == 200:
+        break

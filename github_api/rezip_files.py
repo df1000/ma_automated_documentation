@@ -2,7 +2,7 @@ import zipfile
 import os
 
 # Path to the original ZIP file
-original_zip = "../data/raw_data_zip/raw_data_range_0_22196.zip"
+original_zip = "../data/repo_data/taniiishk_rock-paper-scissors-game_2025-04-20_18-35-28.zip"
 
 # Directory to extract the contents
 extracted_dir = "../data/raw_data/"
@@ -12,4 +12,4 @@ with zipfile.ZipFile(original_zip, 'r') as zip_ref:
     zip_ref.extractall(extracted_dir)
 
 
-# lisa-linux@LAPTOP-VLI78DI6:~/stuff/ma_automated_documentation/github_api$ python3 zip_files.py
+# lisa-linux@LAPTOP-VLI78DI6:~/stuff/ma_automated_documentation/github_api$ python3 rezip_files.py

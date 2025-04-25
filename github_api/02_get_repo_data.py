@@ -94,7 +94,7 @@ def download_github_repo(repo_owner, repo_name, refs):
     # Check if the request was successful
     if response.status_code == 200:
         timestamp = datetime.now(tz=None).strftime('%Y-%m-%d_%H-%M-%S')
-        with open(f"../data/repo_data/{repo_owner}_{repo_name}_{timestamp}.zip", "wb") as file:
+        with open(f"../data/raw_repo_data/{repo_owner}_{repo_name}_{timestamp}.zip", "wb") as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
         print(f"Repository '{repo_name}' has been downloaded as a ZIP file.")

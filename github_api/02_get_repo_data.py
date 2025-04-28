@@ -1,22 +1,22 @@
 
-import requests
-import os
+import requests # package for api requests
+import os # package for using operating system
 from dotenv import load_dotenv
 from datetime import datetime # package for timestamps
 import time # package to set time ranges
 from ratelimit import limits, sleep_and_retry # package for handling api requests
-import json
-import pandas as pd
-import random
+import json # package to work with .json
+import pandas as pd # package for data manipulation
+import random # package to work with random numbers
 
-
+# load .env file
 load_dotenv(override=True)
 
 # set ratelimit for requests
 ONE_MINUTE = 60
 
 # set credentials and parameters for api requests
-ACCESS_TOKEN = os.environ['GIT_TOKEN']
+ACCESS_TOKEN = os.environ['GIT_TOKEN'] # get token from .env
 PAYLOAD = {}
 HEADERS = {
   'Accept': 'application/vnd.github+json',
@@ -44,13 +44,22 @@ def set_sleeper(number=None):
 @sleep_and_retry # set function in sleep until specified time periond of 1 minute is over
 @limits(calls=10, period=ONE_MINUTE) # limits number of requests to 10 per minute
 def check_repo_for_readme(repo_owner, repo_name):
-    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/readme"
+    '''
+    Function which checks repository if it contains a README.md.
 
-    response = requests.get(url, headers=HEADERS, data=PAYLOAD)
-    if response.status_code == 404:
+    Args: 
+        repo_owner: Owner of the GitHub repository.
+        repo_name: Name of the GitHub repository.
+    
+    Return: 
+        Boolean  
+    '''
+    url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/readme' # url to check if repo has README.md
+    response = requests.get(url, headers=HEADERS, data=PAYLOAD) # send GET request
+    if response.status_code == 404: # check if status_code is 404 --> repo has no README.md
         print(f'Repo {repo_name} has no README.md.')
         return False
-    elif response.status_code == 200:
+    elif response.status_code == 200: # check if status_code is 200 --> repo has README.md
         return True
     else:
         if response.status_code != 200: # check if status_code is not 200 to prevent time outs and banning from api
@@ -62,8 +71,19 @@ def check_repo_for_readme(repo_owner, repo_name):
 
 
 def check_num_of_files(repo_owner, repo_name, refs):
-    url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/git/trees/{refs}?recursive=1'
-    response = requests.request("GET", url, headers=HEADERS, data=PAYLOAD) 
+    '''
+    Function which checks the number of files within the GitHub repository.
+
+    Args:
+        repo_owner: Owner of the GitHub repository.
+        repo_name: Name of the GitHub repository.
+        refs: Name of branch.
+    
+    Return:
+        Boolean
+    '''
+    url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/git/trees/{refs}?recursive=1' # url to check get all files
+    response = requests.request("GET", url, headers=HEADERS, data=PAYLOAD) # send GET request
     if response.status_code != 200: # check if status_code is not 200 to prevent time outs and banning from api
         print(f'Error with response. Check out status_code {response.status_code}!')
         rate_limit_remaining = int(response.headers.get('X-RateLimit-Remaining')) # get remaining rate limit for requests
@@ -71,9 +91,9 @@ def check_num_of_files(repo_owner, repo_name, refs):
             set_sleeper(61)
             return False
             
-    data = response.json()
-    blob_count = sum(1 for item in data["tree"] if item["type"] == "blob") # count files of type 'blob'
-    if blob_count < 1000:
+    data = response.json() # save response in variable 
+    blob_count = sum(1 for item in data["tree"] if item["type"] == "blob") # count files of type 'blob' (generated with Microsoft Copilot)
+    if blob_count < 1000: 
         return True
     else:
         return False
@@ -82,21 +102,27 @@ def check_num_of_files(repo_owner, repo_name, refs):
 @sleep_and_retry # set function in sleep until specified time periond of 1 minute is over
 @limits(calls=10, period=ONE_MINUTE) # limits number of requests to 10 per minute
 def download_github_repo(repo_owner, repo_name, refs):
+    '''
+    Function which downloads the GitHub repository as ZIP file if the number of files is smaller than 1000.
+    https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#download-a-repository-archive-zip
+    The GitHub api has limit of 1000 files and 100 MB/file for a repository.
+    https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
 
-    # https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#download-a-repository-archive-zip
-    # api has a limit of 1000 files and 100 MB/file per repo (https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28)
-    
-    url =   f'https://api.github.com/repos/{repo_owner}/{repo_name}/zipball/{refs}'
-    
-    # Send a request to the URL
-    response = requests.get(url, stream=True, headers=HEADERS, data=PAYLOAD)
-    
-    # Check if the request was successful
-    if response.status_code == 200:
-        timestamp = datetime.now(tz=None).strftime('%Y-%m-%d_%H-%M-%S')
-        with open(f"../data/raw_repo_data/{repo_owner}_{repo_name}_{timestamp}.zip", "wb") as file:
-            for chunk in response.iter_content(chunk_size=8192):
-                file.write(chunk)
+    Args:
+        repo_owner: Owner of the GitHub repository.
+        repo_name: Name of the GitHub repository.
+        refs: Name of branch.
+
+    Return:
+        None
+    '''  
+    url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/zipball/{refs}' # url to download repo a zip file for specific branch (refs)
+    response = requests.get(url, stream=True, headers=HEADERS, data=PAYLOAD) # send GET request (generated with Microsoft Copilot)
+    if response.status_code == 200: # check if request was successful --> status_code == 200
+        timestamp = datetime.now(tz=None).strftime('%Y-%m-%d_%H-%M-%S') # set timestamp
+        with open(f"../data/raw_repo_data/{repo_owner}_{repo_name}_{timestamp}.zip", "wb") as file: # create zip file for repo
+            for chunk in response.iter_content(chunk_size=8192): # iterate over each chunk (chunk_size=8192) in response data to prevent memory constraints
+                file.write(chunk) # write chunk to zip file
         print(f"Repository '{repo_name}' has been downloaded as a ZIP file.")
     else:
         if response.status_code != 200: # check if status_code is not 200 to prevent time outs and banning from api
@@ -106,30 +132,27 @@ def download_github_repo(repo_owner, repo_name, refs):
                 set_sleeper(61)
 
 
-
-# open json as dataframe
-file_path = '../data/df_repos_sample_250.json'
+file_path = '../data/df_repos_sample_250.json' 
 with open(file_path, 'r') as file:
-    loaded_data = json.load(file)
+    loaded_data = json.load(file) # save .json content with repository metadata as variable
 
-df = pd.DataFrame(data=loaded_data)
-repos = df['full_name'].tolist()
+df = pd.DataFrame(data=loaded_data) # create dataframe
+repos = df['full_name'].tolist() # create a list with all repository identification (repo_owner/repo_name)
 
-num_of_repos = 0
-for repo in repos:
-    repo_owner = repo.split('/')[0]
-    repo_name = repo.split('/')[1]
-    refs = df.loc[df['full_name'] == repo, 'default_branch'].iloc[0]
+num_of_repos = 0 # set counter
+for repo in repos: # iterate overall repositorys in repos list
+    repo_owner = repo.split('/')[0] # create variable repo_owner
+    repo_name = repo.split('/')[1] # create variable repo_name
+    refs = df.loc[df['full_name'] == repo, 'default_branch'].iloc[0] # get default branch from metadata and save it in variable
 
-    check_readme = check_repo_for_readme(repo_owner, repo_name) 
-    check_files = check_num_of_files(repo_owner, repo_name, refs)  
-
-    if check_readme and check_files:
-        download_github_repo(repo_owner, repo_name, refs) 
-        num_of_repos += 1
-    else:
+    check_readme = check_repo_for_readme(repo_owner, repo_name) # call check_repo_for_readme func
+    check_files = check_num_of_files(repo_owner, repo_name, refs) # call check_num_of_files func
+    if check_readme and check_files: # if check_readme and check_files are TRUE 
+        download_github_repo(repo_owner, repo_name, refs) # call download_github_repo func to get repository content as zip file
+        num_of_repos += 1 # increase counter num_of_repos
+    else: # if check_readme and / or check_files FALSE process the next repository
         print(f'{repo} has no README.md or size is to big.')
         continue
 
-    if num_of_repos == 200:
+    if num_of_repos == 200: # if counter num_of_repos == 200 --> break
         break

@@ -2,12 +2,12 @@ import pathlib
 import zipfile
 import os
 
-directory_path = pathlib.Path('../data/raw_data')
+directory_path = pathlib.Path('../data/input_data')
 
 if not directory_path.exists():
     raise FileNotFoundError(f"Directory not found: {directory_path.resolve()}")
 
-archive_path = pathlib.Path("../data/raw_data_range_0_22196.zip")
+archive_path = pathlib.Path("../data/20250430_input_data.zip")
 archive_path.parent.mkdir(parents=True, exist_ok=True)
 
 with zipfile.ZipFile(archive_path, mode="w") as archive:

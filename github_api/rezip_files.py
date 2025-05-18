@@ -2,7 +2,7 @@ import zipfile
 import os
 
 # Path to the original ZIP file
-original_zip = "../data/repo_data_zip/lonePatient_awesome-pretrained-chinese-nlp-models_2025-04-21_11-03-06.zip"
+original_zip = "../data/repo_data_zip/kaxap_arl_2025-04-21_09-12-29.zip"
 
 
 # Directory to extract the contents

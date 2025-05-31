@@ -26,6 +26,7 @@ def check_repo_processed(repo_owner, repo_name):
         data_list = []
 
     if repo_to_check in data_list:
+        print(f'Repo "{repo_name}" from "{repo_owner} is already processed.')
         return True
     else: 
         return False
@@ -127,7 +128,7 @@ def send_query(prompt, type):
 
 
 def create_subprompts(prompt):
-    max_tokens = 127000
+    max_tokens = 200 #127000
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B")
     tokenized_prompt = tokenizer.encode(prompt)
     
@@ -221,7 +222,7 @@ num_of_all_tokens = 0
 cnt = 0
 
 for i in repo_list:
-    if cnt >= 2:
+    if cnt >= 1:
         break
     if num_of_all_tokens >= 5000000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
             print('Number of tokens for daily processing reached. Continue at the next day.')
@@ -229,7 +230,7 @@ for i in repo_list:
             break
 
     if not check_repo_processed(repo_owner=i[0], repo_name=i[1]): 
-        print(f'Repository {i[1]} will be processed.')
+        print(f'Repository "{i[1]}" will be processed.')
         repo_name = i[1]
         repo_owner = i[0]
         num_of_chars = i[2]
@@ -239,18 +240,18 @@ for i in repo_list:
         requirements = repo_data['requirements']
 
         prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
-        print(f'Summary prompt for {repo_name} is created.')
+        print(f'Summary prompt for "{repo_name}" is created.')
         
         num_of_tokens = count_tokens(num_of_chars=num_of_chars)
         #num_of_all_tokens =+ num_of_tokens
         
         summary_list = []
 
-        if num_of_tokens < 127000:
+        if num_of_tokens < 1100: #127000:
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary')
             summary_list.append(summary)
             prompt_readme = write_readme_prompt(repo_name=repo_name, repo_owner=repo_owner, summary_txt=summary, license=license, requirements=requirements)
-            print(f'README prompt for {repo_name} is created.')
+            print(f'README prompt for "{repo_name}" is created.')
             readme, readme_tokens, readme_completion_tokens, readme_prompt_tokens = send_query(prompt=prompt_readme, type='readme')
 
             write_json(repo_owner=repo_owner, repo_name=repo_name, summary_list=summary_list, readme=readme, readme_total_tokens=readme_tokens, readme_completion_tokens=readme_completion_tokens, readme_prompt_tokens=readme_prompt_tokens)
@@ -259,13 +260,15 @@ for i in repo_list:
 
             num_of_all_tokens += summary_tokens
             num_of_all_tokens += readme_tokens
+            print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
             cnt += 1
             
 
         else:
-            print(f'Number of tokens of repository: {repo_name} to big to preprocess in single query. Subprompts are requiered.')
-            sub_prompts = create_subprompts(source_code_cleaned_comments.replace("'", "\\'"))
+            print(f'Number of tokens of repository: "{repo_name}" to big to preprocess in single query. Subprompts are requiered.')
+            sub_prompts = create_subprompts(source_code_cleaned_comments) # list with chunks #.replace("'", "\\'"))
+
             sub_prompt_num = 1
         
             for prompt in sub_prompts:
@@ -278,11 +281,13 @@ for i in repo_list:
                     f'summary_{sub_prompt_num}': sub_summary,
                 }
 
-                sub_prompt_num =+ 1
+                sub_prompt_num += 1
                 summary_list.append(tmp_json)
                 num_of_all_tokens =+ sub_summary_tokens
-            
-            tmp_list = [value for value in summary_list.values()]
+
+            print(f'summary_list: {summary_list}')
+            tmp_list = [list(d.values())[0] for d in summary_list] 
+            print(f'tmp_list: {tmp_list}')
             summary = ''.join(tmp_list)
 
             prompt_readme = write_readme_prompt(repo_name=repo_name, repo_owner=repo_owner, summary_txt=summary, license=license, requirements=requirements)
@@ -294,6 +299,7 @@ for i in repo_list:
             print(f'Summary and README for repository: "{repo_name}" from "{repo_owner}" successfully created.')
 
             num_of_all_tokens += readme_tokens
+            print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
             cnt += 1 
 

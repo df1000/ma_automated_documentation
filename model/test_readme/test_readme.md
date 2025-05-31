@@ -1,60 +1,30 @@
- ## Popular GitHub Repositories by Programming Language
+**Repository Purpose and Overview**
 
-This repository is a Python script that fetches and generates a list of most popular repositories on GitHub based on the given programming language. It uses the GitHub API to retrieve the required information and stores the access token in a local file named "token.json". The script supports multiple programming languages and can fetch up to 10 pages of results per language.
+This repository is a GitHub repository list generator that retrieves and displays the most popular repositories for a given programming language. The repository is designed to fetch data from the GitHub API, process it, and generate a README file in markdown format.
 
-## Installation
+**Key Functionalities**
 
-To use this script, you need to have Python installed on your system. You can install the required dependencies using pip:
+1. **Repository Information Provider**: The repository uses a `RepositoryInformationProvider` class to interact with the GitHub API, handling rate limiting and retrying failed requests.
+2. **Repository Data Retrieval**: The `get_next` method retrieves data from the GitHub API for a given language and page number, handling rate limiting and retrying failed requests.
+3. **Last Commit Date Retrieval**: The `get_last_commit_date` method retrieves the last commit date for a given repository.
+4. **Humanize Date**: The `humanize_date` function formats a date in ISO format to a human-readable format.
+5. **README Generation**: The `generate_readme` function generates a README file in markdown format, including a table of the most popular repositories for a given language.
 
-```bash
-pip install requests argparse json humanize
-```
+**Main Components**
 
-## Usage
+1. **RepositoryInformationProvider**: The main class responsible for interacting with the GitHub API.
+2. **GitHub API**: The external API used to retrieve repository data.
+3. **Markdown Template**: The template used to generate the README file.
 
-To run the script, save the provided code in a file named `github_popular_repos.py` and execute it using the following command:
+**Dependencies**
 
-```bash
-python github_popular_repos.py [--language LANG1, LANG2, ...]
-```
+1. **requests**: A Python library for making HTTP requests.
+2. **urllib3**: A Python library for handling HTTP requests.
+3. **argparse**: A Python library for parsing command-line arguments.
+4. **humanize**: A Python library for formatting dates.
+5. **datetime**: A Python library for working with dates and times.
 
-Replace `LANG1, LANG2, ...` with the desired programming languages, separated by commas. If no languages are specified, the script will fetch the popular repositories for all supported languages.
+**Overall Architecture**
 
-The script generates a markdown file named `repos.md` in the same directory with the most popular repositories for the given languages.
+The repository uses a modular design, with each component responsible for a specific task. The `RepositoryInformationProvider` class acts as the main entry point, interacting with the GitHub API and generating the README file. The `generate_readme` function is responsible for formatting the data and generating the README file. The repository uses a simple and straightforward architecture, making it easy to understand and maintain.
 
-## Contributing
-
-Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
-[MIT License](LICENSE)
-
-## Development
-
-To run the script in development mode, you can use the following command:
-
-```bash
-python -m unittest tests.test_github_popular_repos.py
-```
-
-This will run the unit tests for the script. The tests cover the main functionality of the script and ensure that the expected results are generated.
-
-## Dependencies
-
-The script depends on the following Python libraries:
-
-- `requests`: for making HTTP requests
-- `argparse`: for parsing command-line arguments
-- `json`: for parsing JSON responses
-- `time`: for handling time-related functionality
-- `humanize`: for formatting dates
-- `datetime`: for parsing and manipulating dates
-
-You can install these dependencies using pip:
-
-```bash
-pip install requests argparse json humanize
-```

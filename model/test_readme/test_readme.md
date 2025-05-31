@@ -1,2 +1,30 @@
-    ## dl-docker\n\n### Repository Summary\n\nThe `dl-docker` repository is a Dockerized environment for deep learning with TensorFlow. The primary purpose of this repository is to provide a pre-configured Docker container for running Jupyter Notebooks with TensorFlow, allowing users to easily set up and use a deep learning environment without the need for manual installation and configuration.\n\n### Installation\n\nTo get started with `dl-docker`, follow these steps:\n\n1. Install Docker on your machine if you haven't already.\n2. Clone the repository using `git clone https://github.com/floydhub/dl-docker.git`.\n3. Navigate to the repository directory and run `docker build -t dl-docker .` to build the Docker image.\n4. Run `docker run -p 8888:8888 dl-docker` to start the Docker container.\n5. Open a web browser and navigate to `http://localhost:8888` to access the Jupyter Notebook server.\n\n### Usage\n\nTo use the `dl-docker` environment, follow these steps:\n\n1. Create a new Jupyter Notebook by clicking on the \"New\" button in the top right corner of the Jupyter Notebook server.\n2. Select the Python 2 kernel from the dropdown menu.\n3. Install any additional dependencies required for your project using `!pip install <package_name>`.\n4. Use the TensorFlow library to perform deep learning tasks within your notebooks.\n\n### Contributing\n\nContributions to the `dl-docker` repository are welcome! If you'd like to contribute, please fork the repository and submit a pull request with your changes. Make sure to follow the standard guidelines for contributing to open-source projects.\n\n### License\n\nThis project is licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0).\n\n### Dependencies\n\nThe `dl-docker` repository relies on the following dependencies:\n\n* Docker\n* Jupyter Notebook\n* TensorFlow\n* IPython\n\n### Overall Architecture\n\nThe repository uses a simple and straightforward architecture, with the Dockerfile defining the environment and dependencies, and the Jupyter Notebook server running within the container. The password protection mechanism is implemented using environment variables, ensuring secure access to the Jupyter Notebook server. The multi-kernel support is achieved through the use of the `c.MultiKernelManager` class.
+**Repository Purpose and Overview**
+
+This repository is a GitHub repository list generator that retrieves and displays the most popular repositories for a given programming language. The repository is designed to fetch data from the GitHub API, process it, and generate a README file in markdown format.
+
+**Key Functionalities**
+
+1. **Repository Information Provider**: The repository uses a `RepositoryInformationProvider` class to interact with the GitHub API, handling rate limiting and retrying failed requests.
+2. **Repository Data Retrieval**: The `get_next` method retrieves data from the GitHub API for a given language and page number, handling rate limiting and retrying failed requests.
+3. **Last Commit Date Retrieval**: The `get_last_commit_date` method retrieves the last commit date for a given repository.
+4. **Humanize Date**: The `humanize_date` function formats a date in ISO format to a human-readable format.
+5. **README Generation**: The `generate_readme` function generates a README file in markdown format, including a table of the most popular repositories for a given language.
+
+**Main Components**
+
+1. **RepositoryInformationProvider**: The main class responsible for interacting with the GitHub API.
+2. **GitHub API**: The external API used to retrieve repository data.
+3. **Markdown Template**: The template used to generate the README file.
+
+**Dependencies**
+
+1. **requests**: A Python library for making HTTP requests.
+2. **urllib3**: A Python library for handling HTTP requests.
+3. **argparse**: A Python library for parsing command-line arguments.
+4. **humanize**: A Python library for formatting dates.
+5. **datetime**: A Python library for working with dates and times.
+
+**Overall Architecture**
+
+The repository uses a modular design, with each component responsible for a specific task. The `RepositoryInformationProvider` class acts as the main entry point, interacting with the GitHub API and generating the README file. The `generate_readme` function is responsible for formatting the data and generating the README file. The repository uses a simple and straightforward architecture, making it easy to understand and maintain.
 

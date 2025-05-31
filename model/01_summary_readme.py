@@ -18,19 +18,22 @@ def open_json(path):
 
 
 def check_repo_processed(repo_owner, repo_name):
-    ### hier nachbessern. liest nicht aus, evtl. nicht untereinander sondern hintereinander als liste schreiben
-    loaded_json = open_json(path='../data/helper/repos_processed.json')
-    val_to_check = (repo_owner, repo_name)
+    try:
+        repo_to_check = [repo_owner, repo_name]
+        with open('../data/helper/repos_processed.json', 'r') as file:
+            data_list = json.load(file)
+    except json.JSONDecodeError:
+        data_list = []
 
-    if val_to_check in loaded_json:
+    if repo_to_check in data_list:
         return True
-    else:
+    else: 
         return False
 
 
 def write_summary_prompt(repo_name, input_txt):
     prompt_summary = f'''
-        You are acting like software development expert for the following GitHub repository {repo_name}.
+        You are acting like software development expert for the following GitHub repository "{repo_name}".
         Your task is to summarize the given source code string "{input_txt}" in natural language so a specialist is able to understand
         the purpose of the repository.
         Identify its purpose, key functionalites, main components and dependencies. Focus on the overall architecture and structure 
@@ -43,16 +46,19 @@ def write_summary_prompt(repo_name, input_txt):
 
 
 def write_readme_prompt(repo_name, repo_owner, summary_txt, license, requirements):
-    # markdown format passt noch nicht. sieht scheiße aus
+    # markdown format passt noch nicht. sieht scheiße aus --> mit print() sieht das Format gut aus
+    # with open('../test_readme/my_test_readme.md', 'w') as file:
+    # file.write(readme)
+    # varible so speichern und dann sieht das format gut aus ;-)
     prompt_readme = f'''
-        You are acting like software development expert for the following GitHub repository {repo_name} from the owner {repo_owner}. 
+        You are acting like software development expert for the following GitHub repository "{repo_name}" from the owner "{repo_owner}". 
         Your task is to create a README for the repository in Markdown format. 
         Use the provided summary: "{summary_txt}", the license: "{license}" and the given requirements: "{requirements}".
         If license and requirements are "None", try to find the missing content in the provided summary.
         The README file should contain information about what the project does, why it is useful, how users 
         can get started, where they can get help, and how to maintain and contribute to the project.
-        If you don't know the answer add a hint following this style […]. You're not allowed to create 
-        made-up content to fill gaps and you're not allowed to add additional paragraphs.
+        If you don't know the answer add a hint following this style […]. 
+        You're not allowed to create made-up content to fill gaps and or add additional paragraphs.
 
         Use the following Markdown template and fill each paragraph. 
 
@@ -105,12 +111,17 @@ def send_query(prompt, type):
         response = snowflake_session.sql(query).collect()
         res = json.loads(response[0]['RESPONSE'])
         message = res['choices'][0]['messages']
-        tokens = res['usage']['total_tokens']
+        total_tokens = res['usage']['total_tokens']
+        completion_tokens = res['usage']['completion_tokens']
+        prompt_tokens = res['usage']['prompt_tokens']
 
         print(f'SQL query for executing the {type} prompt was successful.')
+
+        if type == 'summary':
+            return message, total_tokens
+        elif type == 'readme':
+            return message, total_tokens, completion_tokens, prompt_tokens
         
-        return message, tokens
-    
     except Exception as e:
         print(f'Error for executing SQL statement: {e}')
 
@@ -125,12 +136,17 @@ def create_subprompts(prompt):
     return [tokenizer.decode(chunk) for chunk in chunks] # (generated with Microsoft Copilot)
 
 
-def write_json(repo_owner, repo_name, summary_list, readme):
+def write_json(repo_owner, repo_name, summary_list, readme, readme_total_tokens, readme_completion_tokens, readme_prompt_tokens):
     tmp_json = {
         'repo_owner': repo_owner,
         'repo_name': repo_name,
         'summaries': summary_list,
-        'readme': readme
+        'readme': readme,
+        'readme_tokens': {
+            'total_tokens': readme_total_tokens,
+            'completion_tokens': readme_completion_tokens,
+            'prompt_tokens':readme_prompt_tokens
+        }
     }
 
     with open(f'../data/output_data/{repo_owner}_{repo_name}_output.json', 'w') as file:
@@ -138,9 +154,18 @@ def write_json(repo_owner, repo_name, summary_list, readme):
 
 
 def write_preprocessed_repo(repo_owner, repo_name):
-    tmp_tuple = (repo_owner, repo_name)
-    with open('../data/helper/repos_processed.json', 'a') as file:
-        file.write(str(tmp_tuple) + '\n')
+    path = '../data/helper/repos_processed.json'
+    try:
+        with open(path, 'r') as file:
+            data_list = json.load(file)
+    except json.JSONDecodeError:
+        data_list = []
+
+    new_entry = [repo_owner, repo_name]
+    data_list.append(new_entry)
+
+    with open(path, 'w') as file:
+        json.dump(data_list, file)
 
 
 # load .env file
@@ -162,6 +187,7 @@ connection_params = {
 # build Snowflake session with connection parameters
 snowflake_session = Session.builder.configs(connection_params).create()
 ('Snowflake sessions is build.')
+print('---------------------------------------------')
 
 # # define llm for summary
 # # characters_per_token: 3.99 -->  3.9 mio characters per day
@@ -171,22 +197,24 @@ model = 'llama3.1-8b'
 model_summary_params = {
    'temperature': 0, # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex --> Internetrecherche hat keine anderen Empfehlungen ergeben
    # 'top_p': # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
-    'max_tokens': 3000
+    'max_tokens': 5000
 }
 
 model_readme_params = {
    'temperature': 0.1, # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex --> Internetrecherche hat keine anderen Empfehlungen ergeben
    # 'top_p': # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
-    'max_tokens': 4000
+    'max_tokens': 6000
 }
 
 print('Model parameters are defined.')
+print('---------------------------------------------')
 
 # load json with filtered repository
 # the summary and readme creation should begin with the repository which contains the smallest number of characters
 loaded_data = open_json(path='../data/df_repos_counts_filtered.json')
 df = pd.DataFrame(loaded_data)
 print('Dataframe is created.')
+print('---------------------------------------------')
 repo_list = [(row.repo_owner, row.repo_name, row.source_code_cleaned_comments) for row in df.itertuples()]
 
 num_of_all_tokens = 0
@@ -195,6 +223,10 @@ cnt = 0
 for i in repo_list:
     if cnt >= 2:
         break
+    if num_of_all_tokens >= 5000000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
+            print('Number of tokens for daily processing reached. Continue at the next day.')
+            print('---------------------------------------------')
+            break
 
     if not check_repo_processed(repo_owner=i[0], repo_name=i[1]): 
         print(f'Repository {i[1]} will be processed.')
@@ -210,27 +242,24 @@ for i in repo_list:
         print(f'Summary prompt for {repo_name} is created.')
         
         num_of_tokens = count_tokens(num_of_chars=num_of_chars)
-        num_of_all_tokens =+ num_of_tokens
-
-        if num_of_all_tokens >= 5000000:
-            print('Number of tokens for daily processing reached. Continue at the next day.')
-            break
+        #num_of_all_tokens =+ num_of_tokens
         
         summary_list = []
 
         if num_of_tokens < 127000:
-
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary')
             summary_list.append(summary)
             prompt_readme = write_readme_prompt(repo_name=repo_name, repo_owner=repo_owner, summary_txt=summary, license=license, requirements=requirements)
             print(f'README prompt for {repo_name} is created.')
-            readme, readme_tokens = send_query(prompt=prompt_readme, type='readme')
+            readme, readme_tokens, readme_completion_tokens, readme_prompt_tokens = send_query(prompt=prompt_readme, type='readme')
 
-            write_json(repo_owner=repo_owner, repo_name=repo_name, summary_list=summary_list, readme=readme)
+            write_json(repo_owner=repo_owner, repo_name=repo_name, summary_list=summary_list, readme=readme, readme_total_tokens=readme_tokens, readme_completion_tokens=readme_completion_tokens, readme_prompt_tokens=readme_prompt_tokens)
             write_preprocessed_repo(repo_owner=repo_owner, repo_name=repo_name)
-            print(f'Summary and README for repository: {repo_name} from {repo_owner} successfully created.')
+            print(f'Summary and README for repository: "{repo_name}" from "{repo_owner}" successfully created.')
 
             num_of_all_tokens += summary_tokens
+            num_of_all_tokens += readme_tokens
+            print(f'Number of processed tokens: {num_of_all_tokens}')
             cnt += 1
             
 
@@ -257,17 +286,18 @@ for i in repo_list:
             summary = ''.join(tmp_list)
 
             prompt_readme = write_readme_prompt(repo_name=repo_name, repo_owner=repo_owner, summary_txt=summary, license=license, requirements=requirements)
-            readme, readme_tokens = send_query(prompt=prompt_readme, type='readme')
+            readme, readme_tokens, readme_completion_tokens, readme_prompt_tokens = send_query(prompt=prompt_readme, type='readme')
 
-            write_json(repo_owner=repo_owner, repo_name=repo_name, summary_list=summary_list, readme=readme)
+            write_json(repo_owner=repo_owner, repo_name=repo_name, summary_list=summary_list, readme=readme, readme_total_tokens=readme_tokens, readme_completion_tokens=readme_completion_tokens, readme_prompt_tokens=readme_prompt_tokens)
             write_preprocessed_repo(repo_owner=repo_owner, repo_name=repo_name)
 
-            print(f'Summary and README for repository: {repo_name} from {repo_owner} successfully created.')
+            print(f'Summary and README for repository: "{repo_name}" from "{repo_owner}" successfully created.')
 
             num_of_all_tokens += readme_tokens
-            cnt += 1
-        
+            print(f'Number of processed tokens: {num_of_all_tokens}')
+            cnt += 1 
 
+        print('---------------------------------------------')
     else:
         continue
     

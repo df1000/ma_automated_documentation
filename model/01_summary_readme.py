@@ -35,12 +35,13 @@ def check_repo_processed(repo_owner, repo_name):
 
 def write_summary_prompt(repo_name, input_txt):
     prompt_summary = f'''
-        You are acting like a software development expert for the following GitHub repository "{repo_name}".
-        Your task is to summarize the given source code string "{input_txt}" in natural language so a specialist is able to understand
+        You are acting as a software development expert for the following GitHub repository "{repo_name}".
+        Your task is to summarize the given source code string "{input_txt}" in natural language, so a specialist is able to understand
         the purpose of the repository.
-        Identify its purpose, key functionalites, main components and dependencies. Focus on the overall architecture and structure 
-        rather than line-by-line details. Do not add any recomandations or improvement suggestions but concentrate on the summary. 
-        Present the summary in a clear and concise language. 
+        Identify its purpose, key functions, main components and dependencies. Focus on the overall architecture and structure 
+        rather than line-by-line details. Do not add any recommendations or improvement suggestions, but concentrate on the summary. 
+        Present the summary in a clear and concise language.
+        You are not allowed to add any small talk. 
     ''' 
     prompt_summary = prompt_summary.replace("'", "\\'") # to prevent error in sql statement
 
@@ -49,13 +50,14 @@ def write_summary_prompt(repo_name, input_txt):
 
 def write_sub_summary_prompt(repo_name, input_txt, sub_summary_num, total_num_of_prompts):
     prompt_sub_summary = f'''
-        You are acting like a software development expert for the following GitHub repository "{repo_name}".
-        Your task is to summarize the given source code string "{input_txt}" in natural language so a specialist is able to understand
+        You are acting as a software development expert for the following GitHub repository "{repo_name}".
+        Your task is to summarize the given source code string "{input_txt}" in natural language, so a specialist is able to understand
         the purpose of the repository. This sourcecode is part {sub_summary_num} from {total_num_of_prompts}. 
         Note that you will not receive the full code because it will expand your maximum number of input tokens.
-        Identify its purpose, key functionalites, main components and dependencies. Focus on the overall architecture and structure 
-        rather than line-by-line details. Do not add any recomandations or improvement suggestions but concentrate on the summary. 
+        Identify its purpose, key functions, main components and dependencies. Focus on the overall architecture and structure 
+        rather than line-by-line details. Do not add any recommendations or improvement suggestions, but concentrate on the summary. 
         Present the summary in a clear and concise language. 
+        You are not allowed to add any small talk.
     ''' 
     prompt_sub_summary = prompt_sub_summary.replace("'", "\\'") # to prevent error in sql statement
 
@@ -68,18 +70,18 @@ def write_readme_prompt(repo_name, repo_owner, summary_txt, license, requirement
     # file.write(readme)
     # varible so speichern und dann sieht das format gut aus ;-)
     prompt_readme = f'''
-        You are acting like a software development expert for the following GitHub repository "{repo_name}" from the owner "{repo_owner}". 
+        You are acting as a software development expert for the following GitHub repository: "{repo_name}" from the owner "{repo_owner}". 
         Your task is to create a README for the repository in Markdown format. 
         Use the provided summary: "{summary_txt}", the license: "{license}" and the given requirements: "{requirements}".
-        If license and requirements are "None", try to find the missing content in the provided summary.
+        If the license and requirements are "None", try to find the missing content in the provided summary.
         The README file should contain information about what the project does, why it is useful, how users 
         can get started, where they can get help, and how to maintain and contribute to the project.
-        If you don't know the answer add a hint following this style […]. 
-        You're not allowed to create made-up content to fill gaps and or add additional paragraphs.
+        If you don't know the answer, add a hint following this style […]. 
+        You're not allowed to create made-up content to fill gaps, and or add additional paragraphs.
 
-        Use the following Markdown template and fill each paragraph. 
+        Use the following Markdown template and fill in each paragraph. 
 
-        ## Titel
+        ## Title
 
         ## Installation
 
@@ -89,8 +91,8 @@ def write_readme_prompt(repo_name, repo_owner, summary_txt, license, requirement
 
         ## License
 
-        Do not include any sensitive data like names or emails. Keep the output clean, structured and well formated using Markdown. 
-        Your are not allowed to add any small talk.
+        Do not include any sensitive data like names or emails. Keep the output clean, structured and well-formated using Markdown. 
+        You are not allowed to add any small talk.
     '''
     prompt_readme = prompt_readme.replace("'", "\\'")  # to prevent error in sql statement
 

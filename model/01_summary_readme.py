@@ -6,6 +6,7 @@ from transformers import AutoTokenizer
 from huggingface_hub import login
 import pandas as pd
 import json
+import math
 
 
 def open_json(path):
@@ -34,7 +35,7 @@ def check_repo_processed(repo_owner, repo_name):
 
 def write_summary_prompt(repo_name, input_txt):
     prompt_summary = f'''
-        You are acting like software development expert for the following GitHub repository "{repo_name}".
+        You are acting like a software development expert for the following GitHub repository "{repo_name}".
         Your task is to summarize the given source code string "{input_txt}" in natural language so a specialist is able to understand
         the purpose of the repository.
         Identify its purpose, key functionalites, main components and dependencies. Focus on the overall architecture and structure 
@@ -46,13 +47,28 @@ def write_summary_prompt(repo_name, input_txt):
     return prompt_summary
 
 
+def write_sub_summary_prompt(repo_name, input_txt, sub_summary_num, total_num_of_prompts):
+    prompt_sub_summary = f'''
+        You are acting like a software development expert for the following GitHub repository "{repo_name}".
+        Your task is to summarize the given source code string "{input_txt}" in natural language so a specialist is able to understand
+        the purpose of the repository. This sourcecode is part {sub_summary_num} from {total_num_of_prompts}. 
+        Note that you will not receive the full code because it will expand your maximum number of input tokens.
+        Identify its purpose, key functionalites, main components and dependencies. Focus on the overall architecture and structure 
+        rather than line-by-line details. Do not add any recomandations or improvement suggestions but concentrate on the summary. 
+        Present the summary in a clear and concise language. 
+    ''' 
+    prompt_sub_summary = prompt_sub_summary.replace("'", "\\'") # to prevent error in sql statement
+
+    return prompt_sub_summary
+
+
 def write_readme_prompt(repo_name, repo_owner, summary_txt, license, requirements):
     # markdown format passt noch nicht. sieht scheiße aus --> mit print() sieht das Format gut aus
     # with open('../test_readme/my_test_readme.md', 'w') as file:
     # file.write(readme)
     # varible so speichern und dann sieht das format gut aus ;-)
     prompt_readme = f'''
-        You are acting like software development expert for the following GitHub repository "{repo_name}" from the owner "{repo_owner}". 
+        You are acting like a software development expert for the following GitHub repository "{repo_name}" from the owner "{repo_owner}". 
         Your task is to create a README for the repository in Markdown format. 
         Use the provided summary: "{summary_txt}", the license: "{license}" and the given requirements: "{requirements}".
         If license and requirements are "None", try to find the missing content in the provided summary.
@@ -82,7 +98,7 @@ def write_readme_prompt(repo_name, repo_owner, summary_txt, license, requirement
 
 
 def count_tokens(num_of_chars):
-    num_of_tokens = num_of_chars / 3.99
+    num_of_tokens = math.floor(num_of_chars / 3.99)
 
     return num_of_tokens
 
@@ -128,7 +144,7 @@ def send_query(prompt, type):
 
 
 def create_subprompts(prompt):
-    max_tokens = 200 #127000
+    max_tokens = 400 #127000
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B")
     tokenized_prompt = tokenizer.encode(prompt)
     
@@ -169,6 +185,17 @@ def write_preprocessed_repo(repo_owner, repo_name):
         json.dump(data_list, file)
 
 
+def check_repo_for_subprompts(repo_owner, repo_name):
+    directory = '../data/tmp_output_data/'
+    file_to_check = f'{repo_owner}_{repo_name}_tmp_output.json'
+
+    if file_to_check in os.listdir(directory):
+        print(f'Repo "{repo_name} is partly processed. Further works will continue.')
+        return True
+    else:
+        return False
+    
+
 # load .env file
 load_dotenv(override=True)
 
@@ -198,7 +225,7 @@ model = 'llama3.1-8b'
 model_summary_params = {
    'temperature': 0, # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex --> Internetrecherche hat keine anderen Empfehlungen ergeben
    # 'top_p': # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
-    'max_tokens': 5000
+    'max_tokens': 4000
 }
 
 model_readme_params = {
@@ -220,6 +247,7 @@ repo_list = [(row.repo_owner, row.repo_name, row.source_code_cleaned_comments) f
 
 num_of_all_tokens = 0
 cnt = 0
+flag_break_loops = False # flag to break all loops, if number of subprompts is to big to process on one day
 
 for i in repo_list:
     if cnt >= 1:
@@ -239,17 +267,21 @@ for i in repo_list:
         license = repo_data['license']
         requirements = repo_data['requirements']
 
-        prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
-        print(f'Summary prompt for "{repo_name}" is created.')
+        # prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
+        # print(f'Summary prompt for "{repo_name}" is created.')
         
-        num_of_tokens = count_tokens(num_of_chars=num_of_chars)
+        guess_of_tokens = count_tokens(num_of_chars=num_of_chars)
+        print(f'guss_of_tokens: {guess_of_tokens}')
         #num_of_all_tokens =+ num_of_tokens
         
         summary_list = []
 
-        if num_of_tokens < 1100: #127000:
+        if guess_of_tokens < 1100: #127000:
+            prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
+            print(f'Summary prompt for "{repo_name}" is created.')
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary')
             summary_list.append(summary)
+
             prompt_readme = write_readme_prompt(repo_name=repo_name, repo_owner=repo_owner, summary_txt=summary, license=license, requirements=requirements)
             print(f'README prompt for "{repo_name}" is created.')
             readme, readme_tokens, readme_completion_tokens, readme_prompt_tokens = send_query(prompt=prompt_readme, type='readme')
@@ -267,27 +299,59 @@ for i in repo_list:
 
         else:
             print(f'Number of tokens of repository: "{repo_name}" to big to preprocess in single query. Subprompts are requiered.')
-            sub_prompts = create_subprompts(source_code_cleaned_comments) # list with chunks #.replace("'", "\\'"))
 
-            sub_prompt_num = 1
+            if check_repo_for_subprompts(repo_owner=repo_owner, repo_name=repo_name):
+                with open(f'../data/tmp_output_data/{repo_owner}_{repo_name}_tmp_output.json', 'r') as file:
+                    loaded_data = json.load(file)
+
+                summary_list = loaded_data['summary_list']
+                processed_sub_prompts = loaded_data['processed_sub_prompts'] + 1
+                sub_prompts = loaded_data['remaining_sub_prompts']
+                total_num_of_prompts = loaded_data['total_num_of_prompts']
+            else: 
+                sub_prompts = create_subprompts(source_code_cleaned_comments) # list with chunks 
+                #print(f'list with chunks: {sub_prompts}')
+                total_num_of_prompts = len(sub_prompts)
+                processed_sub_prompts = 1
         
             for prompt in sub_prompts:
-                sub_prompt = prompt.replace('<|begin_of_text|>\n', '')
+                sub_prompt = prompt.replace('<|begin_of_text|>\n', '').replace('<|end_of_text|>\n', '')
 
-                prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=sub_prompt)
-                sub_summary, sub_summary_tokens = send_query(prompt_summary, type='summary')
+                prompt_sub_summary = write_sub_summary_prompt(repo_name=repo_name, input_txt=sub_prompt, sub_summary_num=processed_sub_prompts, total_num_of_prompts=total_num_of_prompts )
+                sub_summary, sub_summary_tokens = send_query(prompt_sub_summary, type='summary')
                 
                 tmp_json = {
-                    f'summary_{sub_prompt_num}': sub_summary,
+                    f'summary_{processed_sub_prompts}': sub_summary,
                 }
 
-                sub_prompt_num += 1
-                summary_list.append(tmp_json)
                 num_of_all_tokens =+ sub_summary_tokens
+                summary_list.append(tmp_json)
+                processed_sub_prompts += 1
 
-            print(f'summary_list: {summary_list}')
+                if num_of_all_tokens >= 500: #5000000:
+                    tmp_json = {
+                        'summary_list': summary_list,
+                        'remaining_sub_prompts': sub_prompts[processed_sub_prompts -2:],
+                        'processed_sub_prompts': processed_sub_prompts -1,
+                        'total_num_of_prompts': total_num_of_prompts
+                    }
+
+                    with open(f'../data/tmp_output_data/{repo_owner}_{repo_name}_tmp_output.json', 'w') as file:
+                        json.dump(tmp_json, file)
+
+                    flag_break_loops = True
+                    print('---------------------------------------------')
+                    print('Flag to break all loops is set to True.')
+                    print('Current list with summaries is saved for further processing.')
+                    break
+                
+                
+               # print(f'sub_summary {processed_sub_prompts} from total_num_of_prompts {total_num_of_prompts}, num_of_all_tokens: {num_of_all_tokens}')
+
+            if flag_break_loops == True:
+                break
+
             tmp_list = [list(d.values())[0] for d in summary_list] 
-            print(f'tmp_list: {tmp_list}')
             summary = ''.join(tmp_list)
 
             prompt_readme = write_readme_prompt(repo_name=repo_name, repo_owner=repo_owner, summary_txt=summary, license=license, requirements=requirements)
@@ -298,6 +362,11 @@ for i in repo_list:
 
             print(f'Summary and README for repository: "{repo_name}" from "{repo_owner}" successfully created.')
 
+            file_path = f'../data/tmp_output_data/{repo_owner}_{repo_name}_tmp_output.json'
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f'Temporary file {file_path} has been deleted.')
+        
             num_of_all_tokens += readme_tokens
             print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
@@ -308,4 +377,5 @@ for i in repo_list:
         continue
     
 snowflake_session.close()
+print('---------------------------------------------')
 print('Snowflake session is closed.')

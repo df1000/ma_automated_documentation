@@ -43,7 +43,8 @@ def write_summary_prompt(repo_name, input_txt):
         Present the summary in a clear and concise language.
         You are not allowed to add any small talk. 
     ''' 
-    prompt_summary = prompt_summary.replace("'", "\\'") # to prevent error in sql statement
+    prompt_summary = prompt_summary.replace("'", "\\'").replace(";", "\\;").replace('"', '\\"')
+    #.replace("=", "\\=").replace(".", "\\").replace("]", "\\]").replace("[", "\\[").replace("$","\\$").replace("(", "\\(").replace(")", "\\)") # to prevent error in sql statement
 
     return prompt_summary
 
@@ -55,11 +56,12 @@ def write_sub_summary_prompt(repo_name, input_txt, sub_summary_num, total_num_of
         the purpose of the repository. This sourcecode is part {sub_summary_num} from {total_num_of_prompts}. 
         Note that you will not receive the full code because it will expand your maximum number of input tokens.
         Identify its purpose, key functions, main components and dependencies. Focus on the overall architecture and structure 
-        rather than line-by-line details. Do not add any recommendations or improvement suggestions, but concentrate on the summary. 
+        rather than line-by-line details. Do not add any comments, recommendations or improvement suggestions, but concentrate on the summary. 
         Present the summary in a clear and concise language. 
         You are not allowed to add any small talk.
     ''' 
-    prompt_sub_summary = prompt_sub_summary.replace("'", "\\'") # to prevent error in sql statement
+    prompt_sub_summary = prompt_sub_summary.replace("'", "\\'").replace(";", "\\;").replace('"', '\\"')
+    #.replace("=", "\\=").replace(".", "\\").replace("]", "\\]").replace("[", "\\[").replace("$","\\$").replace("(", "\\(").replace(")", "\\)") # to prevent error in sql statement
 
     return prompt_sub_summary
 
@@ -146,7 +148,7 @@ def send_query(prompt, type):
 
 
 def create_subprompts(prompt):
-    max_tokens = 400 #127000
+    max_tokens = 126000 # max number of tokens is 127000, but Snowflake requieres tokens for processing
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B")
     tokenized_prompt = tokenizer.encode(prompt)
     
@@ -168,7 +170,7 @@ def write_json(repo_owner, repo_name, summary_list, readme, readme_total_tokens,
         }
     }
 
-    with open(f'../data/output_data/{repo_owner}_{repo_name}_output.json', 'w') as file:
+    with open(f'../data/output_readme_data/{repo_owner}_{repo_name}_output.json', 'w') as file:
         json.dump(tmp_json, file)
 
 
@@ -216,7 +218,7 @@ connection_params = {
 
 # build Snowflake session with connection parameters
 snowflake_session = Session.builder.configs(connection_params).create()
-('Snowflake sessions is build.')
+print('Snowflake sessions is build.')
 print('---------------------------------------------')
 
 # # define llm for summary
@@ -247,12 +249,12 @@ print('Dataframe is created.')
 print('---------------------------------------------')
 repo_list = [(row.repo_owner, row.repo_name, row.source_code_cleaned_comments) for row in df.itertuples()]
 
-num_of_all_tokens = 0
+num_of_all_tokens = 80745 # new day --> 0
 cnt = 0
 flag_break_loops = False # flag to break all loops, if number of subprompts is to big to process on one day
 
 for i in repo_list:
-    if cnt >= 1:
+    if cnt >= 2:
         break
     if num_of_all_tokens >= 5000000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
             print('Number of tokens for daily processing reached. Continue at the next day.')
@@ -264,7 +266,7 @@ for i in repo_list:
         repo_name = i[1]
         repo_owner = i[0]
         num_of_chars = i[2]
-        repo_data = open_json(path=f'../data/input_data/{repo_owner}_{repo_name}.json')
+        repo_data = open_json(path=f'../data/input_readme_data/{repo_owner}_{repo_name}.json')
         source_code_cleaned_comments = repo_data['source_code_cleaned_comments']
         license = repo_data['license']
         requirements = repo_data['requirements']
@@ -273,12 +275,12 @@ for i in repo_list:
         # print(f'Summary prompt for "{repo_name}" is created.')
         
         guess_of_tokens = count_tokens(num_of_chars=num_of_chars)
-        print(f'guss_of_tokens: {guess_of_tokens}')
+        print(f'guess_of_tokens: {guess_of_tokens}')
         #num_of_all_tokens =+ num_of_tokens
         
         summary_list = []
 
-        if guess_of_tokens < 1100: #127000:
+        if guess_of_tokens < 126000:
             prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
             print(f'Summary prompt for "{repo_name}" is created.')
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary')
@@ -312,7 +314,6 @@ for i in repo_list:
                 total_num_of_prompts = loaded_data['total_num_of_prompts']
             else: 
                 sub_prompts = create_subprompts(source_code_cleaned_comments) # list with chunks 
-                #print(f'list with chunks: {sub_prompts}')
                 total_num_of_prompts = len(sub_prompts)
                 processed_sub_prompts = 1
         
@@ -326,11 +327,11 @@ for i in repo_list:
                     f'summary_{processed_sub_prompts}': sub_summary,
                 }
 
-                num_of_all_tokens =+ sub_summary_tokens
+                num_of_all_tokens += sub_summary_tokens
                 summary_list.append(tmp_json)
                 processed_sub_prompts += 1
 
-                if num_of_all_tokens >= 500: #5000000:
+                if num_of_all_tokens >= 5000000:
                     tmp_json = {
                         'summary_list': summary_list,
                         'remaining_sub_prompts': sub_prompts[processed_sub_prompts -2:],
@@ -347,8 +348,6 @@ for i in repo_list:
                     print('Current list with summaries is saved for further processing.')
                     break
                 
-                
-               # print(f'sub_summary {processed_sub_prompts} from total_num_of_prompts {total_num_of_prompts}, num_of_all_tokens: {num_of_all_tokens}')
 
             if flag_break_loops == True:
                 break

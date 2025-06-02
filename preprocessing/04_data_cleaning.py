@@ -84,20 +84,51 @@ def clean_code(text):
     return cleaned_str
 
 
-input_data_path = '../data/input_data'
+input_data_path = '../data/input_readme_data'
 
 df = pd.DataFrame(columns=['repo_owner', 'repo_name', 'source_code_comments', 'source_code', 'source_code_cleaned_comments', 'source_code_cleaned'])
 
 root_dir = Path('../data/repo_data_zip')
+#cnt = 0 # for testing
 for zip_file in root_dir.iterdir():
+    # for testing
+    # if cnt >=1:
+    #     break
     #if zip_file.suffix == '.zip':
+
     print(f'Next subdirectory {zip_file.name} will be processed.')
     path_to_zip = f'{root_dir}/{zip_file.name}'
+    print(f'path_to_zip: {path_to_zip}')
     repo_path_unzip = unzip_files(path_to_zip)
+    #print(f'repo_path_unzip: {repo_path_unzip}')
     
-    repo_parts = repo_path_unzip.split('/')[-1].split('-')
-    repo_name = '-'.join(reduce(lambda x, y: x + '-' + y, repo_parts[:-1]).split('-')[1:])
-    repo_owner = repo_path_unzip.split('/')[3].split('-')[0]
+    # repo_parts = repo_path_unzip.split('/')[-1].split('-')
+    # repo_name = '-'.join(reduce(lambda x, y: x + '-' + y, repo_parts[:-1]).split('-')[1:])
+    # repo_owner = repo_path_unzip.split('/')[3].split('-')[0]
+
+    repo_parts = path_to_zip.split('.')[-2].split('/')[-1]
+    #repo_parts = path_to_zip.split('/')[-1]
+    print(f'repo_parts: {repo_parts}')
+
+    pattern = r"^(.*?)(_?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$" # (generated with Microsoft Copilot)
+    match = re.match(pattern, repo_parts)
+
+    if match:
+        result = match.group(1)
+    else:
+        print('no result')
+
+    pattern2 = r'-'
+
+    if re.search(pattern2, result):
+        repo_owner = result.split('_')[0]
+        repo_name = result.split('_')[1]
+    else:
+
+        repo_owner = result.split('_')[0]
+        repo_name = result.split('_')[1:]
+        repo_name = '_'.join(repo_name)
+
 
     tmp_json = {
         'repo_owner': repo_owner,
@@ -171,6 +202,8 @@ for zip_file in root_dir.iterdir():
     # delete unzip file for saving memory
     shutil.rmtree(repo_path_unzip)
     print(f'unzipped file for repo {repo_owner}_{repo_name} is deleted')
+
+    #cnt += 1
 
 tmp_json = df.to_json(orient='records', lines=False, force_ascii=False)
 with open('../data/df_repos_counts.json', 'w') as file:

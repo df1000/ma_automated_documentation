@@ -43,8 +43,6 @@ def write_summary_prompt(repo_name, input_txt):
         Present the summary in a clear and concise language.
         You are not allowed to add any small talk. 
     ''' 
-    prompt_summary = prompt_summary.replace("'", "\\'").replace(";", "\\;").replace('"', '\\"')
-    #.replace("=", "\\=").replace(".", "\\").replace("]", "\\]").replace("[", "\\[").replace("$","\\$").replace("(", "\\(").replace(")", "\\)") # to prevent error in sql statement
 
     return prompt_summary
 
@@ -60,9 +58,7 @@ def write_sub_summary_prompt(repo_name, input_txt, sub_summary_num, total_num_of
         Present the summary in a clear and concise language. 
         You are not allowed to add any small talk.
     ''' 
-    prompt_sub_summary = prompt_sub_summary.replace("'", "\\'").replace(";", "\\;").replace('"', '\\"')
-    #.replace("=", "\\=").replace(".", "\\").replace("]", "\\]").replace("[", "\\[").replace("$","\\$").replace("(", "\\(").replace(")", "\\)") # to prevent error in sql statement
-
+    
     return prompt_sub_summary
 
 
@@ -96,7 +92,6 @@ def write_readme_prompt(repo_name, repo_owner, summary_txt, license, requirement
         Do not include any sensitive data like names or emails. Keep the output clean, structured and well-formated using Markdown. 
         You are not allowed to add any small talk.
     '''
-    prompt_readme = prompt_readme.replace("'", "\\'")  # to prevent error in sql statement
 
     return prompt_readme
 
@@ -116,20 +111,21 @@ def send_query(prompt, type):
     try:
         query = f"""
             SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                '{model}',
+                ?,
                 [
                     {{
                         'role': 'user', 
-                        'content': '{prompt}'
+                        'content': ?
                     }}
                 ],
                 {{
-                    'temperature': {model_params['temperature']},
-                    'max_tokens':  {model_params['max_tokens']}
+                    'temperature': ?,
+                    'max_tokens':  ?
                 }} 
             ) AS response
         """
-        response = snowflake_session.sql(query).collect()
+        response = snowflake_session.sql(query, params=[model, prompt, model_params['temperature'], model_params['max_tokens']]).collect()
+        #response = snowflake_session.sql(query).collect()
         res = json.loads(response[0]['RESPONSE'])
         message = res['choices'][0]['messages']
         total_tokens = res['usage']['total_tokens']
@@ -213,7 +209,8 @@ connection_params = {
     "user": os.environ['SNOWFLAKE_USER'],
     "password": os.environ['SNOWFLAKE_USER_PASSWORD'],
     "role": 'ACCOUNTADMIN',
-    "warehouse": 'COMPUTE_WH'
+    "warehouse": 'COMPUTE_WH',
+    'paramstyle': 'qmark'
 }
 
 # build Snowflake session with connection parameters
@@ -249,12 +246,12 @@ print('Dataframe is created.')
 print('---------------------------------------------')
 repo_list = [(row.repo_owner, row.repo_name, row.source_code_cleaned_comments) for row in df.itertuples()]
 
-num_of_all_tokens = 80745 # new day --> 0
+num_of_all_tokens = 2510117 # new day --> 0
 cnt = 0
 flag_break_loops = False # flag to break all loops, if number of subprompts is to big to process on one day
 
 for i in repo_list:
-    if cnt >= 2:
+    if cnt >= 1:
         break
     if num_of_all_tokens >= 5000000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
             print('Number of tokens for daily processing reached. Continue at the next day.')
@@ -280,7 +277,7 @@ for i in repo_list:
         
         summary_list = []
 
-        if guess_of_tokens < 126000:
+        if guess_of_tokens < 65000: #126000:
             prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
             print(f'Summary prompt for "{repo_name}" is created.')
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary')

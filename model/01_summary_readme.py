@@ -246,13 +246,13 @@ print('Dataframe is created.')
 print('---------------------------------------------')
 repo_list = [(row.repo_owner, row.repo_name, row.source_code_cleaned_comments) for row in df.itertuples()]
 
-num_of_all_tokens = 0 # new day --> 0
-# cnt = 0
+num_of_all_tokens = 2510117 # new day --> 0
+cnt = 0
 flag_break_loops = False # flag to break all loops, if number of subprompts is to big to process on one day
 
 for i in repo_list:
-    # if cnt >= 2:
-    #     break
+    if cnt >= 1:
+        break
     if num_of_all_tokens >= 5000000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
             print('Number of tokens for daily processing reached. Continue at the next day.')
             print('---------------------------------------------')
@@ -277,7 +277,7 @@ for i in repo_list:
         
         summary_list = []
 
-        if guess_of_tokens < 126000:
+        if guess_of_tokens < 65000: #126000:
             prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
             print(f'Summary prompt for "{repo_name}" is created.')
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary')
@@ -295,7 +295,7 @@ for i in repo_list:
             num_of_all_tokens += readme_tokens
             print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
-            # cnt += 1
+            cnt += 1
             
 
         else:
@@ -368,7 +368,7 @@ for i in repo_list:
             num_of_all_tokens += readme_tokens
             print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
-            # cnt += 1 
+            cnt += 1 
 
         print('---------------------------------------------')
     else:

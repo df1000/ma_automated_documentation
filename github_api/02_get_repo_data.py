@@ -1,3 +1,12 @@
+# Author: Lisa Wallner
+# Description: In this Python script data of multiple GitHub repositories via the API based on previous collected repository metadata will be requested. 
+# Depedencies:
+#   - github_api/01_get_repo_metadata.py
+#   - preprocessing/01_repos_metadata.ipynb
+#   - preprocessing/02_analyse_repos_metadata.ipynb
+#   - preprocessing/03_get_split_of_repos.ipynb
+#   - data/helper/repos_downloaded_zip.json
+
 
 import requests # package for api requests
 import os # package for using operating system

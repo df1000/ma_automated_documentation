@@ -1,3 +1,6 @@
+# Author: Lisa Wallner
+# Description: In this Python script metdata of multiple GitHub repositories via the API will be requested. 
+
 import requests # package for api requests
 import json # package to work with .json
 from getpass import getpass # package for handing over credentials

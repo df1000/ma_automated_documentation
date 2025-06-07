@@ -2,15 +2,15 @@ import zipfile
 import os
 
 # Path to the original ZIP file
-original_zip = "../data/repo_data_zip/lyst_lightfm_2025-04-21_09-12-18.zip"
+original_zip = "../data/raw_data_zip/raw_data_no_range.zip"
 
 
 # Directory to extract the contents
-extracted_dir = "../data/repo_data_unzip/"
+extracted_dir = "../data/raw_data/"
 
 # Extract all files
 with zipfile.ZipFile(original_zip, 'r') as zip_ref:
     zip_ref.extractall(extracted_dir)
 
 
-# lisa-linux@LAPTOP-VLI78DI6:~/stuff/ma_automated_documentation/github_api$ python3 rezip_files.py
+# lisa-linux@LAPTOP-VLI78DI6:~/stuff/ma_automated_documentation/github_api$ python3 helper_rezip_files.py

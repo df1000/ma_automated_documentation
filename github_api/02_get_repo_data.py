@@ -36,15 +36,15 @@ def check_repo_processed(repo_owner, repo_name):
     Return:
         Boolean
     '''
-    try:
-        repo_to_check = [repo_owner, repo_name]
-        with open('../data/helper/repos_downloaded_zip.json', 'r') as file:
-            data_list = json.load(file)
-    except json.JSONDecodeError:
-        data_list = []
+    try: # try to open the documentation file
+        repo_to_check = [repo_owner, repo_name] # list with two values --> repo to check
+        with open('../data/helper/repos_downloaded_zip.json', 'r') as file: # open and load documentation file which contains information about previous loaded repositories
+            data_list = json.load(file) # save loaded content in variable data_list
+    except json.JSONDecodeError: # raise exception if JSONDecodeError --> documentation file is empty
+        data_list = [] # create new empty list
         print(f'Repo "{repo_name}" from "{repo_owner} is not downloaded.')
 
-    if repo_to_check in data_list:
+    if repo_to_check in data_list: # check if repository is already downloaded
         print(f'Repo "{repo_name}" from "{repo_owner} is already downloaded.')
         return True
     else: 
@@ -52,17 +52,29 @@ def check_repo_processed(repo_owner, repo_name):
     
 
 def write_preprocessed_repo(repo_owner, repo_name):
-    path = '../data/helper/repos_downloaded_zip.json'
-    try:
-        with open(path, 'r') as file:
-            data_list = json.load(file)
-    except json.JSONDecodeError:
-        data_list = []
+    '''
+    Function which writes the owner and the name of the GitHub repository to a documentation file, if the repository is
+    alread processed.
+    Path of the documentation file: '../data/helper/repos_downloaded_zip.json'
 
-    new_entry = [repo_owner, repo_name]
-    data_list.append(new_entry)
+    Args:
+        repo_owner: The name of the GitHub repository owner.
+        repo_name: The name of the GitHub repository.
 
-    with open(path, 'w') as file:
+    Return:
+        None
+    '''
+    path = '../data/helper/repos_downloaded_zip.json' # path where the documentation file is saved
+    try: # try to open the documentation file
+        with open(path, 'r') as file: # open and load documentation file which contains information about previous loaded repositories
+            data_list = json.load(file) # save loaded content in variable data_list
+    except json.JSONDecodeError: # raise exception if JSONDecodeError --> documentation file is empty
+        data_list = [] # create new empty list
+
+    new_entry = [repo_owner, repo_name] # create new sublist with processed repository
+    data_list.append(new_entry) # append sublist 'new_entry' to existing data_list
+
+    with open(path, 'w') as file: # open documentation file and save data_list
         json.dump(data_list, file)
 
 
@@ -136,7 +148,9 @@ def check_num_of_files(repo_owner, repo_name, refs):
             
     data = response.json() # save response in variable 
     try:
-        blob_count = sum(1 for item in data["tree"] if item["type"] == "blob") # count files of type 'blob' (generated with Microsoft Copilot)
+        # count files of type 'blob'
+        # iterate over all files 
+        blob_count = sum(1 for item in data["tree"] if item["type"] == "blob")  # (generated with Microsoft Copilot)
     except KeyError as e:
         print('Key error in data["tree"]. Maybe repo was further developed.')
         return False

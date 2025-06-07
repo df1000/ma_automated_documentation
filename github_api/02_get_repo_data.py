@@ -149,16 +149,20 @@ def check_num_of_files(repo_owner, repo_name, refs):
     data = response.json() # save response in variable 
     try:
         # count files of type 'blob'
-        # iterate over all files 
+        # iterate over all files in the key-value-pairs and set 1 if type == 'blob' (blob indicates a file)
+        # sum all 1's --> number of files in one repository
+        # https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
         blob_count = sum(1 for item in data["tree"] if item["type"] == "blob")  # (generated with Microsoft Copilot)
-    except KeyError as e:
-        print('Key error in data["tree"]. Maybe repo was further developed.')
+    except KeyError as e: # raise exception if a KeyError occurs to prevent the code for failing
+        print('Key error in data["tree"]. Maybe repo was further developed.') 
+        # there can be a time offset between the timestamp where the metadata of the repository and the repository in general were collected
+        # it cannot be ruled out that there will be further development in repository
         return False
     if blob_count < 1000: 
         return True
     else:
-        return False
         print('Repo is to big.')
+        return False
     
 
 @sleep_and_retry # set function in sleep until specified time periond of 1 minute is over
@@ -201,7 +205,7 @@ with open(file_path, 'r') as file:
 df = pd.DataFrame(data=loaded_data) # create dataframe
 repos = df['full_name'].tolist() # create a list with all repository identification (repo_owner/repo_name)
 
-num_of_repos = 32 # set counter
+num_of_repos = 0 # set counter
 #cnt = 0 # for testing
 
 for repo in repos: # iterate overall repositorys in repos list

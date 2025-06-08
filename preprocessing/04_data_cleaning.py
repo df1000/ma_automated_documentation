@@ -30,6 +30,13 @@ def read_md(file_path):
     return md_content
 
 
+def remove_email(text):
+    email_pattern = '[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+[a-zA-Z0-9-.]+' # (generated with Microsoft Copilot)
+    cleaned_str = re.sub(email_pattern, '', text)
+  
+    return cleaned_str
+
+
 def remove_comments(text):
     single_line_comments_pattern = r'#.*' # (generated with Microsoft Copilot)
     mulit_line_comments_pattern = r"\"\"\".*?\"\"\"|'''.*?'''" # (generated with Microsoft Copilot)
@@ -46,7 +53,7 @@ def remove_space_newline(text):
 
 
 def remove_urls(text):
-  
+
     url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+' # (source: https://github.com/souradipp76/ReadMeReady --> scripts/data.ipynb)
     cleaned_str = re.sub(url_pattern, '', text)
   
@@ -76,12 +83,30 @@ def remove_emoji(text): # (source: https://github.com/souradipp76/ReadMeReady --
 
 
 def clean_code(text):
-    clean1 = remove_space_newline(text)
+    clean0 = remove_email(text)
+    clean1 = remove_space_newline(clean0)
     clean2 = remove_urls(clean1)
     clean3 = remove_html(clean2)
     cleaned_str = remove_emoji(clean3)
 
     return cleaned_str
+
+
+def remove_notebook_output(filepath):
+
+    with open(filepath, 'r', errors='ignore') as f: # read jupyter notebook as json
+        data = json.load(f) # save loaded content in in variable 'data'
+    
+    # interate over all cells in the cells list inside the dictionary data
+    # each cell represent a code or a markdown cell
+    # data.get() --> try to get the key 'cells' from data, # if 'cells' exists its value will returned, if not an empty list will returned to avoid errors
+    for cell in data.get('cells', []):
+        if 'outputs' in cell: # check if cell has key 'outputs' 
+            cell['outputs'] = None # set value of 'outputs' to None
+
+    file_str_to_save = json.dumps(data) # save modified data variable to string
+
+    return file_str_to_save
 
 
 input_data_path = '../data/input_readme_data'
@@ -91,8 +116,8 @@ df = pd.DataFrame(columns=['repo_owner', 'repo_name', 'source_code_comments', 's
 root_dir = Path('../data/repo_data_zip')
 #cnt = 0 # for testing
 for zip_file in root_dir.iterdir():
-    # for testing
-    # if cnt >=1:
+
+    # if cnt >=2:
     #     break
     #if zip_file.suffix == '.zip':
 
@@ -101,7 +126,7 @@ for zip_file in root_dir.iterdir():
     print(f'path_to_zip: {path_to_zip}')
     repo_path_unzip = unzip_files(path_to_zip)
     #print(f'repo_path_unzip: {repo_path_unzip}')
-    
+
     # repo_parts = repo_path_unzip.split('/')[-1].split('-')
     # repo_name = '-'.join(reduce(lambda x, y: x + '-' + y, repo_parts[:-1]).split('-')[1:])
     # repo_owner = repo_path_unzip.split('/')[3].split('-')[0]
@@ -159,7 +184,7 @@ for zip_file in root_dir.iterdir():
                 if file.lower() in ('readme.md', 'readme.txt', 'readme') and check_readme is False:
                     tmp_json['readme'] = read_md(file_path)
                     check_readme = True
-                elif file.lower() in ('license.md', 'license.txt', 'license') and check_license is False:
+                elif file.lower() in ('license.md', 'license.txt', 'license.rst', 'license') and check_license is False:
                     tmp_json['license'] = read_md(file_path)
                     check_license = True
                 elif file == 'requirements.txt' and check_requirements is False:
@@ -168,10 +193,14 @@ for zip_file in root_dir.iterdir():
                         tmp_json['requirements'] = ''.join(line.strip() for line in requirements_content)
                         check_requirements = True
                 elif file.endswith(('.py', '.ipynb')):
-                    with open(file_path, 'r', errors='ignore') as f:
-                        # list_source_code.append((file_path, f.read())) # to check if all files are in list_source_code add file_path
-                        list_source_code.append(f.read())
-                    # print(f'from {file_path} the file: {file} was added to list_source_code')
+                    if file.endswith(('.ipynb')):
+                        file_str_to_save = remove_notebook_output(file_path)
+                        list_source_code.append(file_str_to_save)
+                    else:
+                        with open(file_path, 'r', errors='ignore') as f:
+                            # list_source_code.append((file_path, f.read())) # to check if all files are in list_source_code add file_path
+                            list_source_code.append(f.read())
+                        # print(f'from {file_path} the file: {file} was added to list_source_code')
             except Exception as e:
                 print(f'Error during processing file {file_path}: {e}')
 
@@ -200,8 +229,17 @@ for zip_file in root_dir.iterdir():
         print(f'.json for {repo_owner}_{repo_name} is saved')
 
     # delete unzip file for saving memory
-    shutil.rmtree(repo_path_unzip)
+    try:
+        shutil.rmtree(repo_path_unzip)
+    except NotADirectoryError as e:
+        print(f'{e}')
+        print('Delete whole director.')
+        shutil.rmtree('../data/repo_data_unzip')
+        Path('../data/repo_data_unzip').mkdir(exist_ok=True)
+        print('New directory was create: ../data/repo_data_unzip')
+
     print(f'unzipped file for repo {repo_owner}_{repo_name} is deleted')
+    print('--------------------------------------')
 
     #cnt += 1
 

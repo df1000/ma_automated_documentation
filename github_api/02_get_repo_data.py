@@ -6,6 +6,9 @@
 #   - preprocessing/02_analyse_repos_metadata.ipynb
 #   - preprocessing/03_get_split_of_repos.ipynb
 #   - data/helper/repos_downloaded_zip.json
+#
+# Hint: If lines are created with support of a Large Language Model or the code is taken from another source, you find following hint at the end of the line:
+#       (generated with Microsoft Copilot) or (source: link_to_source)
 
 
 import requests # package for api requests

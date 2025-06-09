@@ -1,3 +1,7 @@
+#
+# Hint: If lines are created with support of a Large Language Model or the code is taken from another source, you find following hint at the end of the line:
+#       (generated with Microsoft Copilot) or (source: link_to_source)
+
 import zipfile
 import os
 

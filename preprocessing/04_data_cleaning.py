@@ -1,12 +1,20 @@
-import pandas as pd
-import json
-import numpy as np
-import os
-from functools import reduce
-import re
-import shutil
-from pathlib import Path
-import zipfile
+# Author: Lisa Wallner
+# Description: In this Python script the content of the previous loaded GitHub repositories are cleaned and prepared for the next step - the summary and README creation.
+# Depedencies:
+#   - data/repo_data_zip/
+#   - data/helper/helper_repos_metadata.json
+#
+# Hint: If lines are created with support of a Large Language Model or the code is taken from another source, you find following hint at the end of the line:
+#       (generated with Microsoft Copilot) or (source: link_to_source)
+
+import pandas as pd # package for data manipulation
+import json # package to work with .json
+import numpy as np # package for numeric operations
+import os # package for using operating system
+import re # package for regex patterns
+import shutil # package to work with files and directories
+from pathlib import Path # package to work with paths
+import zipfile # package to work with ZIP files
 
 
 def unzip_files(path_to_zip):

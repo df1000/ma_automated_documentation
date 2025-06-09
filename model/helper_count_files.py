@@ -1,7 +1,11 @@
+#
+# Hint: If lines are created with support of a Large Language Model or the code is taken from another source, you find following hint at the end of the line:
+#       (generated with Microsoft Copilot) or (source: link_to_source)
+
 import os
 
 #directory = '../data/output_readme_data'
-directory = '../data/repo_data_zip'
+directory = '../data/input_readme_data'
 file_count = len([f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))])
 
 print(f'Number of files: {file_count}')

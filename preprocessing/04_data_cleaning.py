@@ -109,6 +109,18 @@ def remove_notebook_output(filepath):
     return file_str_to_save
 
 
+def get_repo_metadata(repo_path):
+    with open('../data/helper/helper_repos_metadata.json', 'r') as f:
+        loaded_metadata = json.load(f)
+    
+    for dictionary in loaded_metadata:
+        if dictionary['original_filename'] == repo_path:
+            repo_owner = dictionary['repo_owner']
+            repo_name = dictionary['repo_name']
+    
+    return repo_owner, repo_name
+
+
 input_data_path = '../data/input_readme_data'
 
 df = pd.DataFrame(columns=['repo_owner', 'repo_name', 'source_code_comments', 'source_code', 'source_code_cleaned_comments', 'source_code_cleaned'])
@@ -119,41 +131,13 @@ for zip_file in root_dir.iterdir():
 
     # if cnt >=2:
     #     break
-    #if zip_file.suffix == '.zip':
 
     print(f'Next subdirectory {zip_file.name} will be processed.')
     path_to_zip = f'{root_dir}/{zip_file.name}'
     print(f'path_to_zip: {path_to_zip}')
     repo_path_unzip = unzip_files(path_to_zip)
-    #print(f'repo_path_unzip: {repo_path_unzip}')
 
-    # repo_parts = repo_path_unzip.split('/')[-1].split('-')
-    # repo_name = '-'.join(reduce(lambda x, y: x + '-' + y, repo_parts[:-1]).split('-')[1:])
-    # repo_owner = repo_path_unzip.split('/')[3].split('-')[0]
-
-    repo_parts = path_to_zip.split('.')[-2].split('/')[-1]
-    #repo_parts = path_to_zip.split('/')[-1]
-    print(f'repo_parts: {repo_parts}')
-
-    pattern = r"^(.*?)(_?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})$" # (generated with Microsoft Copilot)
-    match = re.match(pattern, repo_parts)
-
-    if match:
-        result = match.group(1)
-    else:
-        print('no result')
-
-    pattern2 = r'-'
-
-    if re.search(pattern2, result):
-        repo_owner = result.split('_')[0]
-        repo_name = result.split('_')[1]
-    else:
-
-        repo_owner = result.split('_')[0]
-        repo_name = result.split('_')[1:]
-        repo_name = '_'.join(repo_name)
-
+    repo_owner, repo_name = get_repo_metadata(repo_path=zip_file.name)
 
     tmp_json = {
         'repo_owner': repo_owner,
@@ -229,14 +213,7 @@ for zip_file in root_dir.iterdir():
         print(f'.json for {repo_owner}_{repo_name} is saved')
 
     # delete unzip file for saving memory
-    try:
-        shutil.rmtree(repo_path_unzip)
-    except NotADirectoryError as e:
-        print(f'{e}')
-        print('Delete whole director.')
-        shutil.rmtree('../data/repo_data_unzip')
-        Path('../data/repo_data_unzip').mkdir(exist_ok=True)
-        print('New directory was create: ../data/repo_data_unzip')
+    shutil.rmtree(repo_path_unzip)
 
     print(f'unzipped file for repo {repo_owner}_{repo_name} is deleted')
     print('--------------------------------------')

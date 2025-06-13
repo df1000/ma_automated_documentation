@@ -1,4 +1,10 @@
+## Author: Lisa Wallner
+# 
 #
+# Dependencies:
+# - data/df_repos_counts_filtered.json
+# - data/input_readme_data/
+
 # Hint: If lines are created with support of a Large Language Model or the code is taken from another source, you find following hint at the end of the line:
 #       (generated with Microsoft Copilot) or (source: link_to_source)
 
@@ -85,6 +91,44 @@ def write_readme_prompt(repo_name, repo_owner, summary_txt, license, requirement
 
         ## Title
 
+        ## Description
+
+        ## Installation
+
+        ## Usage
+
+        ## Contributing
+
+        ## License
+
+        Do not include any sensitive data like names or emails. Keep the output clean, structured and well-formated using Markdown. 
+        You are not allowed to add any small talk.
+    '''
+
+    return prompt_readme
+
+
+def write_readme_prompt_from_subsummaries(repo_name, repo_owner, summary_txt, license, requirements):
+    # markdown format passt noch nicht. sieht scheiße aus --> mit print() sieht das Format gut aus
+    # with open('../test_readme/my_test_readme.md', 'w') as file:
+    # file.write(readme)
+    # varible so speichern und dann sieht das format gut aus ;-)
+    prompt_readme = f'''
+        You are acting as a software development expert for the following GitHub repository: "{repo_name}" from the owner "{repo_owner}". 
+        Your task is to create a README for the repository in Markdown format. 
+        Use the provided subsummaries which are combined in one summary: "{summary_txt}", the license: "{license}" and the given requirements: "{requirements}".
+        If the license and requirements are "None", try to find the missing content in the provided summary.
+        The README file should contain information about what the project does, why it is useful, how users 
+        can get started, where they can get help, and how to maintain and contribute to the project.
+        If you don't know the answer, add a hint following this style […]. 
+        You're not allowed to create made-up content to fill gaps, and or add additional paragraphs.
+
+        Use the following Markdown template and fill in each paragraph. 
+
+        ## Title
+
+        ## Description
+
         ## Installation
 
         ## Usage
@@ -102,7 +146,9 @@ def write_readme_prompt(repo_name, repo_owner, summary_txt, license, requirement
 
 def count_tokens(num_of_chars):
     num_of_tokens = math.floor(num_of_chars / 3.99)
+    num_of_tokens += 5000 #11000 # Snowflake needs additional tokens for processing. The number of addtional tokens is not specified so this value is a guess.
 
+    print(f'Number of guessed tokens for current repo: {num_of_tokens} (including addtional guess for Snowflake tokens)')
     return num_of_tokens
 
 
@@ -148,7 +194,7 @@ def send_query(prompt, type):
 
 
 def create_subprompts(prompt):
-    max_tokens = 126000 # max number of tokens is 127000, but Snowflake requieres tokens for processing
+    max_tokens = 120000 # max number of tokens is 128000, but Snowflake requieres tokens for processing
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B")
     tokenized_prompt = tokenizer.encode(prompt)
     
@@ -250,14 +296,14 @@ print('Dataframe is created.')
 print('---------------------------------------------')
 repo_list = [(row.repo_owner, row.repo_name, row.source_code_cleaned_comments) for row in df.itertuples()]
 
-num_of_all_tokens = 2510117 # new day --> 0
-cnt = 0
+num_of_all_tokens = 0 # new day --> 0
+#  cnt = 0 # for testing
 flag_break_loops = False # flag to break all loops, if number of subprompts is to big to process on one day
 
 for i in repo_list:
-    if cnt >= 1:
-        break
-    if num_of_all_tokens >= 5000000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
+    # if cnt >= 1: # for testing
+    #     break
+    if num_of_all_tokens >= 5200000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
             print('Number of tokens for daily processing reached. Continue at the next day.')
             print('---------------------------------------------')
             break
@@ -281,7 +327,7 @@ for i in repo_list:
         
         summary_list = []
 
-        if guess_of_tokens < 65000: #126000:
+        if guess_of_tokens < 126000:
             prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
             print(f'Summary prompt for "{repo_name}" is created.')
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary')
@@ -299,7 +345,7 @@ for i in repo_list:
             num_of_all_tokens += readme_tokens
             print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
-            cnt += 1
+            # cnt += 1 # for testing
             
 
         else:
@@ -332,7 +378,7 @@ for i in repo_list:
                 summary_list.append(tmp_json)
                 processed_sub_prompts += 1
 
-                if num_of_all_tokens >= 5000000:
+                if num_of_all_tokens >= 5200000:
                     tmp_json = {
                         'summary_list': summary_list,
                         'remaining_sub_prompts': sub_prompts[processed_sub_prompts -2:],
@@ -356,7 +402,7 @@ for i in repo_list:
             tmp_list = [list(d.values())[0] for d in summary_list] 
             summary = ''.join(tmp_list)
 
-            prompt_readme = write_readme_prompt(repo_name=repo_name, repo_owner=repo_owner, summary_txt=summary, license=license, requirements=requirements)
+            prompt_readme = write_readme_prompt_from_subsummaries(repo_name=repo_name, repo_owner=repo_owner, summary_txt=summary, license=license, requirements=requirements)
             readme, readme_tokens, readme_completion_tokens, readme_prompt_tokens = send_query(prompt=prompt_readme, type='readme')
 
             write_json(repo_owner=repo_owner, repo_name=repo_name, summary_list=summary_list, readme=readme, readme_total_tokens=readme_tokens, readme_completion_tokens=readme_completion_tokens, readme_prompt_tokens=readme_prompt_tokens)
@@ -372,7 +418,7 @@ for i in repo_list:
             num_of_all_tokens += readme_tokens
             print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
-            cnt += 1 
+            # cnt += 1 # for testing
 
         print('---------------------------------------------')
     else:

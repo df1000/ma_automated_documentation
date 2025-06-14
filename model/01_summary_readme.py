@@ -268,10 +268,10 @@ def send_query(prompt, type):
         response = snowflake_session.sql(query, params=[model, prompt, model_params['temperature'], model_params['max_tokens']]).collect()
         res = json.loads(response[0]['RESPONSE']) # load response as json object and save it in 'res'
         # split 'res' parts and save them into multiple variabels
-        message = res['choices'][0]['messages'] 
-        total_tokens = res['usage']['total_tokens']
-        completion_tokens = res['usage']['completion_tokens']
-        prompt_tokens = res['usage']['prompt_tokens']
+        message = res['choices'][0]['messages'] # https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
+        total_tokens = res['usage']['total_tokens'] # total number of tokens consumed, which is the sum of completion_tokens & prompt_tokens
+        completion_tokens = res['usage']['completion_tokens'] # number of tokens in genearted response
+        prompt_tokens = res['usage']['prompt_tokens'] # number of tokens in the prompt
 
         print(f'SQL query for executing the {type} prompt was successful.')
 
@@ -285,9 +285,9 @@ def send_query(prompt, type):
         print(f'Error for executing SQL statement: {e}')
 
 
-def create_subprompts(prompt):
+def tokenize_text(txt):
     '''
-    Function creates multiple chunks from given prompt to prevent limits of input tokens of choosed LLM.
+    Function creates multiple chunks from given text to prevent limits for input tokens of choosed LLM.
 
     Args:
         prompt: Input which should be tokenized.
@@ -295,17 +295,45 @@ def create_subprompts(prompt):
     Return:
         decoded_chunks
     '''
-    max_tokens = 124000 # max number of tokens is 128000, but Snowflake requieres tokens for processing (see estimate_tokens())
+    max_tokens = 120000 # max number of tokens is 128000, but Snowflake requieres tokens for processing (see estimate_tokens())
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B") # load Autotokenizer.from_pretrained() from transformers with llm specification
-    tokenized_prompt = tokenizer.encode(prompt) # encode prompt into a list of tokens
+    tokenized_txt = tokenizer.encode(txt) # encode txt into a list of tokens
 
-    # iterates over tokenized_prompts and split content into smaller chunks (each chunks contains a max. of 124000 tokens)
+    # iterates over tokenized_txt and split content into smaller chunks (each chunks contains a max. of 120000 tokens)
     # start at i = 0 and get a chunk until max_tokens (stepsize) from tokenized_prompt
     # next chunk --> previous chunk + max_tokens
-    chunks = [tokenized_prompt[i:i+max_tokens] for i in range(0, len(tokenized_prompt), max_tokens)] # (generated with Microsoft Copilot)
+    chunks = [tokenized_txt[i:i+max_tokens] for i in range(0, len(tokenized_txt), max_tokens)] # (generated with Microsoft Copilot)
     decoded_chunks = [tokenizer.decode(chunk) for chunk in chunks] # decode each chunk to text # (generated with Microsoft Copilot)
-
+    
     return decoded_chunks
+
+
+def create_chunk_list(input_txt):
+    '''
+    Function creates creates list with multiple chunks from the provided source code.
+
+    Args:
+        input_txt: A string with source code.
+
+    Returns:
+        chunk_list_cleaned
+    '''
+    max_sequence_length = 131072 # value was identified during errors with AutoTokenizer
+    # list comprehension to iterate over input_txt and create elements which fit to max_sqeuence_length
+    # range() --> start: 0, end: len(input_txt), stepsize: max_sequence_length
+    # elements are sliced based on the given index range (which is controlled with range()) and max_sequence_length
+    input_sequences = [input_txt[i:i+max_sequence_length] for i in range(0, len(input_txt), max_sequence_length)]
+    chunk_list = [] # empty list to save chunks
+
+    for sequence in input_sequences: # iterate through all sequences in input_sequences
+        sequence_chunk = tokenize_text(sequence) # call tokenize_text() for each sequence
+        chunk_list.append(sequence_chunk) # append decoded sequence_chunk to chunk_list
+    
+    print(f'Tokenization for {repo_name} is finished.')
+    chunk_list_cleaned = [''.join(i).replace('<|begin_of_text|>', '') for i in chunk_list] # remove ''<|begin_of_text|>' sequence
+    print(f'Repo needs {len(chunk_list_cleaned)} subsummaries.')
+
+    return chunk_list_cleaned
 
 
 def write_json(repo_owner, repo_name, summary_list, readme, readme_total_tokens, readme_completion_tokens, readme_prompt_tokens):
@@ -439,13 +467,13 @@ print('---------------------------------------------')
 # create repo_list from df, each row of the df is represented as tuple (repo_owner, repo_name, source_code_cleanded_comments) 
 repo_list = [(row.repo_owner, row.repo_name, row.source_code_cleaned_comments) for row in df.itertuples()]
 
-num_of_all_tokens = 0 # number of processed tokens # new day --> 0
-cnt = 0 # for testing
+num_of_all_tokens = 0# number of processed tokens # new day --> 0
+#cnt = 0 # for testing
 flag_break_loops = False # flag to break all loops, if number of subprompts is to big to process on one day
 
 for i in repo_list: # iterate through all entries in repo_list --> each tuple represent a GitHub repository
-    if cnt >= 1: # for testing
-        break
+    # if cnt >= 1: # for testing
+    #     break
     if num_of_all_tokens >= 5200000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
             print('Number of tokens for daily processing reached. Continue at the next day.')
             print('---------------------------------------------')
@@ -469,7 +497,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
         
         summary_list = [] # create empty list to save future generated summaries
 
-        if guess_of_tokens < 126000: # check if guess_of_tokens is smaller then 126,000
+        if guess_of_tokens < 120000: # check if guess_of_tokens is smaller then 120,000 
             # prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
             # print(f'Summary prompt for "{repo_name}" is created.')
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary') # call send_query() to create summary for repository
@@ -487,7 +515,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
             num_of_all_tokens += readme_tokens # increase num_of_all_tokens by readme_tokens
             print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
-            cnt += 1 # for testing
+            #cnt += 1 # for testing
 
         else: # if guess_of_tokens is not smaller then 126,000 --> subsummaries are required
             print(f'Number of tokens of repository: "{repo_name}" to big to preprocess in single query. Subprompts are requiered.')
@@ -503,14 +531,12 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
                 total_num_of_prompts = loaded_data['total_num_of_prompts']
 
             else: # if the process of summary generation hasn't started yet
-                sub_prompts = create_subprompts(source_code_cleaned_comments) # call create_subprompts() --> list with chunks of source code of repository
-                total_num_of_prompts = len(sub_prompts) # get number of necessary subprompts 
+                chunk_list = create_chunk_list(source_code_cleaned_comments) # call create_subprompts() --> list with chunks of source code of repository
+                total_num_of_prompts = len(chunk_list) # get number of necessary subprompts 
                 processed_sub_prompts = 1 # set variable to 1 --> first subprompt
         
-            for prompt in sub_prompts: # iterate over all prompts in the list sub_prompts
-                sub_prompt = prompt.replace('<|begin_of_text|>\n', '').replace('<|end_of_text|>\n', '') # set variable sub_prompt and replace part of string
-
-                prompt_sub_summary = write_sub_summary_prompt(repo_name=repo_name, input_txt=sub_prompt, sub_summary_num=processed_sub_prompts, total_num_of_prompts=total_num_of_prompts) # call write_sub_summary_prompt() 
+            for chunk in chunk_list: # iterate over all prompts in the list sub_prompts
+                prompt_sub_summary = write_sub_summary_prompt(repo_name=repo_name, input_txt=chunk, sub_summary_num=processed_sub_prompts, total_num_of_prompts=total_num_of_prompts) # call write_sub_summary_prompt() 
                 sub_summary, sub_summary_tokens = send_query(prompt_sub_summary, type='summary') # call send_query() to create subsummary for repository
                 
                 # temporary JSON object with current sub_summary
@@ -526,7 +552,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
                     # create tmp_json to document current state of processed subsummaries
                     tmp_json = {
                         'summary_list': summary_list, # list with processed summaries
-                        'remaining_sub_prompts': sub_prompts[processed_sub_prompts -2:], # sub_prompts which aren't processed yet --> -2 to get to the level before 2 steps
+                        'remaining_sub_prompts': chunk_list[processed_sub_prompts -2:], # sub_prompts which aren't processed yet --> -2 to get to the level before 2 steps
                         'processed_sub_prompts': processed_sub_prompts -1, # sub_prompts which are already processed --> -1 to get to the level before 1 step
                         'total_num_of_prompts': total_num_of_prompts # total number of necessary sub_prompts
                     }
@@ -563,7 +589,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
             num_of_all_tokens += readme_tokens # increase num_of_all_tokens by readme_tokens
             print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
-            cnt += 1 # for testing
+            #cnt += 1 # for testing
 
         print('---------------------------------------------')
     else: # if current repository is already processed continue with the next one

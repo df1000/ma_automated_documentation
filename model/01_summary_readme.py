@@ -270,7 +270,7 @@ def send_query(prompt, type):
         # split 'res' parts and save them into multiple variabels
         message = res['choices'][0]['messages'] # https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
         total_tokens = res['usage']['total_tokens'] # total number of tokens consumed, which is the sum of completion_tokens & prompt_tokens
-        completion_tokens = res['usage']['completion_tokens'] # number of tokens in genearted response
+        completion_tokens = res['usage']['completion_tokens'] # number of tokens in genearted response (Anzahl der Outputtokens, also wie lange die Anwort vom LLM ist)
         prompt_tokens = res['usage']['prompt_tokens'] # number of tokens in the prompt
 
         print(f'SQL query for executing the {type} prompt was successful.')
@@ -427,7 +427,7 @@ connection_params = {
     "account": os.environ['SNOWFLAKE_ACCOUNT'], # credentials
     "user": os.environ['SNOWFLAKE_USER'], # credentials
     "password": os.environ['SNOWFLAKE_USER_PASSWORD'], # credentials
-    "role": 'ACCOUNTADMIN', # specifiy Snowflake role
+    "role": 'SYSADMIN', # specifiy Snowflake role
     "warehouse": 'COMPUTE_WH', # choose warehouse for computation
     'paramstyle': 'qmark' # set parameter style --> ?
 }
@@ -467,7 +467,7 @@ print('---------------------------------------------')
 # create repo_list from df, each row of the df is represented as tuple (repo_owner, repo_name, source_code_cleanded_comments) 
 repo_list = [(row.repo_owner, row.repo_name, row.source_code_cleaned_comments) for row in df.itertuples()]
 
-num_of_all_tokens = 0# number of processed tokens # new day --> 0
+num_of_all_tokens = 0 # number of processed tokens # new day --> 0
 #cnt = 0 # for testing
 flag_break_loops = False # flag to break all loops, if number of subprompts is to big to process on one day
 

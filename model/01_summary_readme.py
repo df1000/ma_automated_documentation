@@ -527,7 +527,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
                 # save documented progress in the following variables
                 summary_list = loaded_data['summary_list']
                 processed_sub_prompts = loaded_data['processed_sub_prompts'] + 1 # increase number of processed_sub_prompts to track further progress (step 2 --> see line 529)
-                sub_prompts = loaded_data['remaining_sub_prompts'] # these are the remaing subprompts!!!!
+                chunk_list = loaded_data['remaining_sub_prompts'] # these are the remaing subprompts!!!! (vorher subprompts)
                 total_num_of_prompts = loaded_data['total_num_of_prompts']
 
             else: # if the process of summary generation hasn't started yet

@@ -302,7 +302,7 @@ for zip_file in root_dir.iterdir(): # iterate over all ZIPs in root_dir
             # check file for the conditions
             try: 
                 file_path = os.path.join(root, file) # create file_path --> eg. '../data/repo_data_unzip/repo_XY/file_XY.py'
-                if file.lower() in ('readme.md', 'readme.txt', 'readme') and check_readme is False: # lower filename, check if filename fits to given values ('readme.md', 'readme.txt', 'readme') and if variable check_readme is False
+                if file.lower() in ('readme.md', 'readme.txt', 'readme', 'readme.rst') and check_readme is False: # lower filename, check if filename fits to given values ('readme.md', 'readme.txt', 'readme', 'readme.rst') and if variable check_readme is False
                     tmp_json['readme'] = read_md(file_path) # call read_md()
                     check_readme = True # set variable to True
                 elif file.lower() in ('license.md', 'license.txt', 'license.rst', 'license') and check_license is False: # lower filename, check if filename fits to given values ('license.md', 'license.txt', 'license.rst', 'license') and if variable check_license is False

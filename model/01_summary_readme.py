@@ -11,7 +11,6 @@
 import os # package for using operating system
 from dotenv import load_dotenv
 from snowflake.snowpark.session import Session # package for building and using Snowflake sessions
-# from snowflake.cortex import Complete
 from transformers import AutoTokenizer # package to select the fitting tokenizer for a pretrained model
 from huggingface_hub import login # package for login and identifying to Huggingface
 import pandas as pd # package for data manipulation
@@ -164,7 +163,7 @@ def write_readme_prompt_from_subsummaries(repo_name, repo_owner, summary_txt, li
 
     Args:
         repo_name: The name of the GitHub repository.
-        repo_onwer: The name of the GitHub repository owner.
+        repo_owner: The name of the GitHub repository owner.
         summary_txt: The summary of the GitHub repository source code as string.
         license: The license text as string.
         requirements: The requirements as string.

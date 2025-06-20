@@ -1,13 +1,20 @@
+## Author: Lisa Wallner
+# Description: This Python script creates the evaluations for the original and genearted README files of multiple GitHub repositories.
+# Different prompts for evaluation (1 prompt for the generated README and 1 prompt for the original README) are sent to an LLM via the 
+# Snowflake API and the results are stored in JSON files.
+# Dependencies:
+# - data/input_readme_data/
+
+# Hint: If lines are created with support of a Large Language Model or the code is taken from another source, you find following hint at the end of the line:
+#       (generated with Microsoft Copilot) or (source: link_to_source)
+
 import pandas as pd
 import os # package for using operating system
 from dotenv import load_dotenv
 from snowflake.snowpark.session import Session # package for building and using Snowflake sessions
-from transformers import AutoTokenizer # package to select the fitting tokenizer for a pretrained model
-from huggingface_hub import login # package for login and identifying to Huggingface
 import pandas as pd # package for data manipulation
 import json # package to work with .json
-import math
-import re
+import re # package tow work with Regex patterns
 
 def open_json(path):
     '''
@@ -34,10 +41,12 @@ def check_readme_eval_processed(repo_owner, repo_name, model_type):
     Args:
         repo_owner: The name of the GitHub repository owner.
         repo_name: The name of the GitHub repository.
+        model_type: Name of used LLM.
     
     Return:
         Boolean
     '''
+    # check value of model_type to define path
     if model_type == 'llama3.1-8b': 
         path = '../data/helper/helper_readme_eval_processed_m1.json'
     elif model_type == 'm2': # anpassen
@@ -134,12 +143,12 @@ def send_query(prompt_evaluation, model_type):
 
     Args:
         prompt: Specified prompt which should be processed by the SQL snowflake.cortex.complete() function.
-        type: A string specificing the prompt parameters.
+        model_type: A string specificing the model parameters.
 
     Return:
         message, total_tokens, completion_tokens (optional), prompt_tokens (optional)
     '''
-    # check value of variable type and set model_params for README or summary creation
+    # check value of model_type and set model_params for README or summary creation
     if model_type == 'llama3.1-8b': 
         model_params = model1_params
     elif model_type == 'm2': # anpassen
@@ -179,6 +188,7 @@ def send_query(prompt_evaluation, model_type):
         completion_tokens = res['usage']['completion_tokens'] # number of tokens in genearted response (Anzahl der Outputtokens, also wie lange die Anwort vom LLM ist)
         prompt_tokens = res['usage']['prompt_tokens'] # number of tokens in the prompt
 
+        # values of tokens are saved in a dictonary for later analysis
         evaluation_tokens = {
             'total_tokens': total_tokens,
             'completion_tokens': completion_tokens,
@@ -189,23 +199,28 @@ def send_query(prompt_evaluation, model_type):
 
         return message, evaluation_tokens, total_tokens
         
-        
     except Exception as e: # raise exception if SQL query was not successful
         print(f'Error for executing SQL statement: {e}')
 
 
 def write_json(model_type, repo_owner, repo_name, readme_original, evaluation_original, evaluation_original_tokens, evaluation_original_score, readme_generated, evaluation_generated, evaluation_generated_tokens, evaluation_generated_score):
     '''
-    Function to write and save a JSON file containing data of a GitHub repository for later evaluation.
+    Function to write and save a JSON file containing the evaluation data for a GitHub repository README file.
 
     Args:
+        model_type: 
         repo_owner: The name of the GitHub repository owner.
         repo_name: The name of the GitHub repository.
-        summary_list: A list containing one or multiple summaries of the GitHub repository source code.
-        readme: A README for the specific GitHub repository as string.
-        readme_total_tokens: Number of total processed tokens (completion & prompt) for the README creation.
-        readme_completion_tokens: Number of processed completion tokens for the README creation.
-        readme_prompt_tokens: Number of processed prompt tokens for the README creation.
+        readme_original: A dictionary with the evaluation data for the README file.
+            readme: A README for the specific GitHub repository as string.
+            evaluation: Evaluation of README as string.
+            evaluation_tokens: Number of processed tokens for the README evaluation saved in a dictionary.
+            score: Processed output of evaluation in structured format for later analysis.
+        readme_generated: A dictionary with the evaluation data for the README file.
+            readme: A README for the specific GitHub repository as string.
+            evaluation: Evaluation of README as string.
+            evaluation_tokens: Number of processed tokens for the README evaluation saved in a dictionary.
+            score: Processed output of evaluation in structured format for later analysis.
 
     Return:
         None
@@ -227,7 +242,7 @@ def write_json(model_type, repo_owner, repo_name, readme_original, evaluation_or
                     "score": evaluation_generated_score
                 }
     }
-
+    # check value of model_type to specify the directory for data saving
     if model_type == 'llama3.1-8b': 
         model_dir = 'model1'
     elif model_type == 'm2': # anpassen
@@ -246,10 +261,12 @@ def write_postprocessed_repo(repo_owner, repo_name, model_type):
     Args:
         repo_owner: The name of the GitHub repository owner.
         repo_name: The name of the GitHub repository.
+        model_type: Name of used LLM.
 
     Return:
         None
     '''
+    # check value of model_type to specify the path
     if model_type == 'llama3.1-8b': 
         path = '../data/helper/helper_readme_eval_processed_m1.json'
     elif model_type == 'm2': # anpassen
@@ -271,37 +288,52 @@ def write_postprocessed_repo(repo_owner, repo_name, model_type):
 
 
 def clean_score(score_txt):
-    try:
-        #score_txt = score_txt.replace("'", "\'")
-        score = score_txt.split('### ')
-        score = score[1:]
-        score_dir = []
-        pattern_digit = r"\d##"
+    '''
+    Function which cleans provide score and save the results in a dictonary for later analysis.
 
-        for i in score:
-            line = i.split('\n ')
+    Args:
+        score_txt: String which contains the score values.
+
+    Return:
+        score_dir
+    '''
+    try: # try to apply cleaning to score_txt
+        score = score_txt.split('### ') # split score_txt elements and save them in a list
+        score = score[1:] # slice score and use all elements, but not the first one
+        score_dir = [] # # creaty empty dictionary
+        pattern_digit = r"\d##" # regex pattern to identify the single score value
+
+        for i in score: # iterate over all elements (i) in score
+            line = i.split('\n ') # split i and create new list and save it in the variable line
+            # example
+            # ['"q1": [', '   ##"score": 4##,', '   ##"explanation": The README clearly states the p ...
+
+            # create temporary dictionary
             tmp_dir = {
-                'question': line[0].split(':')[0].replace('"', ''),
-                'score': int(re.findall(pattern_digit, line[1])[0].replace('#','')),
-                #int(line[1].split(': ')[1].replace(':', '').replace(',', '')),
-                'explanation': line[2].split('"explanation": ')[1].replace('"', '').replace('\n', '').replace('\n\n', '')
+                'question': line[0].split(':')[0].replace('"', ''), # split first element of line, take 1 element, split again, take 1 element and replace " with space
+                'score': int(re.findall(pattern_digit, line[1])[0].replace('#','')), # apply regex pattern to second element of line, replace # with space and convert string (should be number) to an integer
+                'explanation': line[2].split('"explanation": ')[1].replace('"', '').replace('\n', '').replace('\n\n', '') # split third element of line, take second element, replace " with space, replace new line symbols with space
             }
 
-            score_dir.append(tmp_dir)
+            score_dir.append(tmp_dir) # append tmp_dir to score_dir
+            # example
+            # [{'question': 'q1',
+            # 'score': 4,
+            # 'explanation': 'The README clearly states the purpose of the project, which is to manage Git submodules for OpenStack projects. However, it would be even better if the description was more detailed and explained the benefits of using the script.##]'},
+            # {'question': 'q2',
+            # 'score': 3,
+            # ...
 
-    except Exception as e:
+
+    except Exception as e: # raise exeption if cleaning was not successful
         print('Error in score cleaning. Value of score_dir is null')
-        score_dir = {}
+        score_dir = {} # creaty empty dictionary
 
     return score_dir
 
 
 # load .env file
 load_dotenv(override=True)
-
-# log to huggingface
-# HF_TOKEN = os.environ['HUGGINGFACE']
-# login(HF_TOKEN)
 
 # set up connection parameters for Snowflake connection
 connection_params = {
@@ -367,23 +399,23 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
         # evaluation for generated readme
         readme_generated_data = open_json(path=f'../data/output_readme_data/{repo_owner}_{repo_name}_output.json') # call open_json()
-        readme_generated = readme_generated_data['readme']
+        readme_generated = readme_generated_data['readme'] # set variable for generated readme
 
-        prompt_evaluation_generated = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_generated)
-        evaluation_generated, evaluation_generated_tokens, evaluation_generated_total_tokens = send_query(prompt_evaluation=prompt_evaluation_generated, model_type=model_type) # call send_query() to create README for repository
-        score_generated_dir = clean_score(evaluation_generated)
+        prompt_evaluation_generated = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_generated) # call write_evaluation_prompt()
+        evaluation_generated, evaluation_generated_tokens, evaluation_generated_total_tokens = send_query(prompt_evaluation=prompt_evaluation_generated, model_type=model_type) # call send_query() to create evaluation for readme
+        score_generated_dir = clean_score(evaluation_generated) # call clean_score() 
         print(f'Evaluation for generated README successfully created.')
 
         # evaluation for original readme
-        readme_original_data = open_json(path=f'../data/input_readme_data/{repo_owner}_{repo_name}.json')
-        readme_original = readme_original_data['readme']
+        readme_original_data = open_json(path=f'../data/input_readme_data/{repo_owner}_{repo_name}.json') # call open_json()
+        readme_original = readme_original_data['readme'] # set variable for original readme 
 
-        prompt_evaluation_original = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_original)
-        evaluation_original, evaluation_original_tokens, evaluation_original_total_tokens = send_query(prompt_evaluation=prompt_evaluation_original, model_type=model_type) # call send_query() to create README for repository
-        score_original_dir = clean_score(evaluation_original)
+        prompt_evaluation_original = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_original) # call write_evaluation_prompt()
+        evaluation_original, evaluation_original_tokens, evaluation_original_total_tokens = send_query(prompt_evaluation=prompt_evaluation_original, model_type=model_type) # call send_query() to create evaluation for readme
+        score_original_dir = clean_score(evaluation_original) # call clean_score()
         print(f'Evaluation for original README successfully created.')
 
-        # save evaluation
+        # save evaluation and call write_json()
         write_json(
             model_type=model_type, 
             repo_owner=repo_owner, 
@@ -398,11 +430,11 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
             evaluation_generated_score=score_generated_dir
         )
 
-        write_postprocessed_repo(repo_owner=repo_owner, repo_name=repo_name, model_type=model_type)
+        write_postprocessed_repo(repo_owner=repo_owner, repo_name=repo_name, model_type=model_type) # call write_postprocessed_repo()
         print(f'Evaluations for repository "{repo_name}" from "{repo_owner}" successfully created.')
 
-        num_of_all_tokens += evaluation_generated_total_tokens
-        num_of_all_tokens += evaluation_original_total_tokens
+        num_of_all_tokens += evaluation_generated_total_tokens # increase num_of_all_tokens by evaluation_generated_total_tokens
+        num_of_all_tokens += evaluation_original_total_tokens # increase num_of_all_tokens by evaluation_original_total_tokens
 
         print('---------------------------------------------')
         print(f'Number of processed tokens: {num_of_all_tokens}')

@@ -11,7 +11,6 @@
 import os # package for using operating system
 from dotenv import load_dotenv
 from snowflake.snowpark.session import Session # package for building and using Snowflake sessions
-# from snowflake.cortex import Complete
 from transformers import AutoTokenizer # package to select the fitting tokenizer for a pretrained model
 from huggingface_hub import login # package for login and identifying to Huggingface
 import pandas as pd # package for data manipulation
@@ -164,7 +163,7 @@ def write_readme_prompt_from_subsummaries(repo_name, repo_owner, summary_txt, li
 
     Args:
         repo_name: The name of the GitHub repository.
-        repo_onwer: The name of the GitHub repository owner.
+        repo_owner: The name of the GitHub repository owner.
         summary_txt: The summary of the GitHub repository source code as string.
         license: The license text as string.
         requirements: The requirements as string.
@@ -238,6 +237,8 @@ def send_query(prompt, type):
     # check value of variable type and set model_params for README or summary creation
     if type == 'summary': 
         model_params = model_summary_params
+    elif type == 'subsummary':
+        model_params = model_subsummary_params
     elif type == 'readme':
         model_params = model_readme_params
 
@@ -276,10 +277,12 @@ def send_query(prompt, type):
         print(f'SQL query for executing the {type} prompt was successful.')
 
         # based on type return specific results
-        if type == 'summary':
-            return message, total_tokens
-        elif type == 'readme':
+        # if type == 'summary':
+        #     return message, total_tokens
+        if type == 'readme':
             return message, total_tokens, completion_tokens, prompt_tokens
+        else: 
+            return message, total_tokens
         
     except Exception as e: # raise exception if SQL query was not successful
         print(f'Error for executing SQL statement: {e}')
@@ -447,6 +450,12 @@ model_summary_params = {
    # 'top_p': # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
     'max_tokens': 4000
 }
+# specify llm parameters for subsummary creation
+model_subsummary_params = {
+   'temperature': 0, # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex --> Internetrecherche hat keine anderen Empfehlungen ergeben
+   # 'top_p': # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
+    'max_tokens': 1000 # for big repos the behavior of the llm acts strange, it fills the output with many dupliates rows
+}
 
 # specify llm parameters for README creation
 model_readme_params = {
@@ -537,7 +546,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
         
             for chunk in chunk_list: # iterate over all prompts in the list sub_prompts
                 prompt_sub_summary = write_sub_summary_prompt(repo_name=repo_name, input_txt=chunk, sub_summary_num=processed_sub_prompts, total_num_of_prompts=total_num_of_prompts) # call write_sub_summary_prompt() 
-                sub_summary, sub_summary_tokens = send_query(prompt_sub_summary, type='summary') # call send_query() to create subsummary for repository
+                sub_summary, sub_summary_tokens = send_query(prompt_sub_summary, type='subsummary') # call send_query() to create subsummary for repository
                 
                 # temporary JSON object with current sub_summary
                 tmp_json = {

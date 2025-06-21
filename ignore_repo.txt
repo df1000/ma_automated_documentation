@@ -3,3 +3,5 @@ bbfamily, abu, written in Java Script
 lonePatient, awsome-pretrained-chinese-nlp-models, no code
 Lcry, a-sheep-assistant, no code
 eeeeeeeeeeeeeeeeeeeeeeeeeeeeee_eeeeeeeeeeeeeeeeeeeeee, no readme (only contains 'e's) and i dont understand the purpose
+
+diego-vicente, som-tsp, hat kein readme file... warum auch immer das bei mir gelandet ist.

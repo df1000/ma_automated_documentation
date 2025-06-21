@@ -49,9 +49,9 @@ def check_readme_eval_processed(repo_owner, repo_name, model_type):
     # check value of model_type to define path
     if model_type == 'llama3.1-8b': 
         path = '../data/helper/helper_readme_eval_processed_m1.json'
-    elif model_type == 'm2': # anpassen
+    elif model_type == 'mixtral-8x7b':
         path = '../data/helper/helper_readme_eval_processed_m2.json'
-    elif model_type == 'm3': # anpassen
+    elif model_type == 'jamba-1.5-mini':
         path = '../data/helper/helper_readme_eval_processed_m3.json'
 
     try: # try to open documentation file
@@ -151,9 +151,9 @@ def send_query(prompt_evaluation, model_type):
     # check value of model_type and set model_params for README or summary creation
     if model_type == 'llama3.1-8b': 
         model_params = model1_params
-    elif model_type == 'm2': # anpassen
+    elif model_type == 'mixtral-8x7b':
         model_params = model2_params
-    elif model_type == 'm3': # anpassen
+    elif model_type == 'jamba-1.5-mini': 
         model_params = model3_params
 
     try: # try to create and execute sql query
@@ -245,9 +245,9 @@ def write_json(model_type, repo_owner, repo_name, readme_original, evaluation_or
     # check value of model_type to specify the directory for data saving
     if model_type == 'llama3.1-8b': 
         model_dir = 'model1'
-    elif model_type == 'm2': # anpassen
+    elif model_type == 'mixtral-8x7b':
         model_dir = 'model2'
-    elif model_type == 'm3': # anpassen
+    elif model_type == 'jamba-1.5-mini': 
         model_dir = 'model3'
 
     with open(f'../data/output_evaluation_data/{model_dir}/{repo_owner}_{repo_name}_evaluation_output.json', 'w') as file: # create new JSON file for GitHub repository
@@ -269,9 +269,9 @@ def write_postprocessed_repo(repo_owner, repo_name, model_type):
     # check value of model_type to specify the path
     if model_type == 'llama3.1-8b': 
         path = '../data/helper/helper_readme_eval_processed_m1.json'
-    elif model_type == 'm2': # anpassen
+    elif model_type == 'mixtral-8x7b': 
         path = '../data/helper/helper_readme_eval_processed_m2.json'
-    elif model_type == 'm3': # anpassen
+    elif model_type == 'jamba-1.5-mini':
         path = '../data/helper/helper_readme_eval_processed_m3.json'
 
     try: # try to open documentation file
@@ -287,49 +287,69 @@ def write_postprocessed_repo(repo_owner, repo_name, model_type):
         json.dump(data_list, file)
 
 
-def clean_score(score_txt):
-    '''
-    Function which cleans provide score and save the results in a dictonary for later analysis.
+# def clean_score(score_txt, model_type):
+#     '''
+#     Function which cleans provide score and save the results in a dictonary for later analysis.
 
-    Args:
-        score_txt: String which contains the score values.
+#     Args:
+#         score_txt: String which contains the score values.
 
-    Return:
-        score_dir
-    '''
-    try: # try to apply cleaning to score_txt
-        score = score_txt.split('### ') # split score_txt elements and save them in a list
-        score = score[1:] # slice score and use all elements, but not the first one
-        score_dir = [] # # creaty empty dictionary
-        pattern_digit = r"\d##" # regex pattern to identify the single score value
+#     Return:
+#         score_dir
+#     '''
+#     try: # try to apply cleaning to score_txt
+#         if model_type == 'llama3.1-8b':
+#             score = score_txt.split('### ') # split score_txt elements and save them in a list
+#             score = score[1:] # slice score and use all elements, but not the first one
+#             score_dir = [] # # creaty empty dictionary
+#             pattern_digit = r"\d##" # regex pattern to identify the single score value
 
-        for i in score: # iterate over all elements (i) in score
-            line = i.split('\n ') # split i and create new list and save it in the variable line
-            # example
-            # ['"q1": [', '   ##"score": 4##,', '   ##"explanation": The README clearly states the p ...
+#             for i in score: # iterate over all elements (i) in score
+#                 line = i.split('\n ') # split i and create new list and save it in the variable line
+#                 # example
+#                 # ['"q1": [', '   ##"score": 4##,', '   ##"explanation": The README clearly states the p ...
 
-            # create temporary dictionary
-            tmp_dir = {
-                'question': line[0].split(':')[0].replace('"', ''), # split first element of line, take 1 element, split again, take 1 element and replace " with space
-                'score': int(re.findall(pattern_digit, line[1])[0].replace('#','')), # apply regex pattern to second element of line, replace # with space and convert string (should be number) to an integer
-                'explanation': line[2].split('"explanation": ')[1].replace('"', '').replace('\n', '').replace('\n\n', '') # split third element of line, take second element, replace " with space, replace new line symbols with space
-            }
+#                 # create temporary dictionary
+#                 tmp_dir = {
+#                     'question': line[0].split(':')[0].replace('"', ''), # split first element of line, take 1 element, split again, take 1 element and replace " with space
+#                     'score': int(re.findall(pattern_digit, line[1])[0].replace('#','')), # apply regex pattern to second element of line, replace # with space and convert string (should be number) to an integer
+#                     'explanation': line[2].split('"explanation": ')[1].replace('"', '').replace('\n', '').replace('\n\n', '') # split third element of line, take second element, replace " with space, replace new line symbols with space
+#                 }
 
-            score_dir.append(tmp_dir) # append tmp_dir to score_dir
-            # example
-            # [{'question': 'q1',
-            # 'score': 4,
-            # 'explanation': 'The README clearly states the purpose of the project, which is to manage Git submodules for OpenStack projects. However, it would be even better if the description was more detailed and explained the benefits of using the script.##]'},
-            # {'question': 'q2',
-            # 'score': 3,
-            # ...
+#                 score_dir.append(tmp_dir) # append tmp_dir to score_dir
+#                 # example
+#                 # [{'question': 'q1',
+#                 # 'score': 4,
+#                 # 'explanation': 'The README clearly states the purpose of the project, which is to manage Git submodules for OpenStack projects. However, it would be even better if the description was more detailed and explained the benefits of using the script.##]'},
+#                 # {'question': 'q2',
+#                 # 'score': 3,
+#                 # ...
+#         elif model_type == 'mixtral-8x7b':
+#             score = score_txt.split('###') # split score_txt elements and save them in a list
+#             if len(score) == 7:
+#                 score = score[1:-1] # slice score and use all elements, but not the first one
+#             elif len(score == 6):
+#                 score = score[1:]
+#             score_dir = [] # # creaty empty dictionary
+#             pattern_digit = r"\d" # regex pattern to identify the single score value
 
+#             for i in score: # iterate over all elements (i) in score
+#                 line = i.split('\n ') # split i and create new list and save it in the variable line
 
-    except Exception as e: # raise exeption if cleaning was not successful
-        print('Error in score cleaning. Value of score_dir is null')
-        score_dir = {} # creaty empty dictionary
+#                 # create temporary dictionary
+#                 tmp_dir = {
+#                     'question': line[0].split(':')[0].replace('"', '').replace('\n',''), # split first element of line, take 1 element, split again, take 1 element and replace " with space
+#                     'score': int(re.findall(pattern_digit, line[1])[0]), # apply regex pattern to second element of line, replace # with space and convert string (should be number) to an integer
+#                     'explanation': line[2].split('"explanation": ')[1].replace('"', '').replace('\n', '').replace('\n\n', '') # split third element of line, take second element, replace " with space, replace new line symbols with space
+#                 }
 
-    return score_dir
+#                 score_dir.append(tmp_dir) # append tmp_dir to score_dir
+
+#     except Exception as e: # raise exeption if cleaning was not successful
+#         print('Error in score cleaning. Value of score_dir is null')
+#         score_dir = {} # creaty empty dictionary
+
+#     return score_dir
 
 
 # load .env file
@@ -349,7 +369,10 @@ snowflake_session = Session.builder.configs(connection_params).create() # build 
 print('Snowflake sessions is build.')
 print('---------------------------------------------')
 
-model_type = 'llama3.1-8b' # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day # other model types
+model_type = 'reka-flash'
+# 'reka-flash' 0.45 credit / 1 millionen token --> 2.2 million tokens per day
+# 'llama3.1-8b' 0.19 credit / 1 million token --> 5.26 million tokens per day
+# 'jamba-1.5-mini' 0.10 credit / 1 million token --> 10 million tokens per day 
 
 # specify llm parameters for summary creation
 model1_params = {
@@ -380,14 +403,17 @@ print('---------------------------------------------')
 # create repo_list from df, each row of the df is represented as tuple (repo_owner, repo_name) 
 repo_list = [(row.repo_owner, row.repo_name) for row in df.itertuples()]
 
-num_of_all_tokens = 0 # number of processed tokens # new day --> 0
-cnt = 0 # for testing
+num_of_all_tokens = 2886398 # number of processed tokens # new day --> 0
+#cnt = 0 # for testing
 flag_break_loops = False # flag to break all loops
 
 for i in repo_list: # iterate through all entries in repo_list --> each tuple represent a GitHub repository
-    if cnt >= 2: # for testing
-        break
-    if num_of_all_tokens >= 5200000: 
+    # if cnt >= 1: # for testing
+    #     break
+    # >= 5200000 --> llama3.1-8b
+    # >= 2200000 --> reka-flash
+    # >= 9000000 --> jamba-1.5-mini
+    if num_of_all_tokens >= 2100000: 
             print('Number of tokens for daily processing reached. Continue at the next day.')
             print('---------------------------------------------')
             break # if num_of_all_tokens >= 5200000 the loop should bread to prevent computing errors from Snowflake
@@ -403,7 +429,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
         prompt_evaluation_generated = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_generated) # call write_evaluation_prompt()
         evaluation_generated, evaluation_generated_tokens, evaluation_generated_total_tokens = send_query(prompt_evaluation=prompt_evaluation_generated, model_type=model_type) # call send_query() to create evaluation for readme
-        score_generated_dir = clean_score(evaluation_generated) # call clean_score() 
+        score_generated_dir = [] #clean_score(evaluation_generated, model_type) # call clean_score() 
         print(f'Evaluation for generated README successfully created.')
 
         # evaluation for original readme
@@ -412,7 +438,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
         prompt_evaluation_original = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_original) # call write_evaluation_prompt()
         evaluation_original, evaluation_original_tokens, evaluation_original_total_tokens = send_query(prompt_evaluation=prompt_evaluation_original, model_type=model_type) # call send_query() to create evaluation for readme
-        score_original_dir = clean_score(evaluation_original) # call clean_score()
+        score_original_dir = [] #clean_score(evaluation_original, model_type) # call clean_score()
         print(f'Evaluation for original README successfully created.')
 
         # save evaluation and call write_json()
@@ -438,7 +464,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
         print('---------------------------------------------')
         print(f'Number of processed tokens: {num_of_all_tokens}')
-        cnt += 1 # for testing
+       # cnt += 1 # for testing
 
 
         print('---------------------------------------------')

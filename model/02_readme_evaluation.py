@@ -49,7 +49,7 @@ def check_readme_eval_processed(repo_owner, repo_name, model_type):
     # check value of model_type to define path
     if model_type == 'llama3.1-8b': 
         path = '../data/helper/helper_readme_eval_processed_m1.json'
-    elif model_type == 'mixtral-8x7b':
+    elif model_type == 'reka-flash':
         path = '../data/helper/helper_readme_eval_processed_m2.json'
     elif model_type == 'jamba-1.5-mini':
         path = '../data/helper/helper_readme_eval_processed_m3.json'
@@ -151,7 +151,7 @@ def send_query(prompt_evaluation, model_type):
     # check value of model_type and set model_params for README or summary creation
     if model_type == 'llama3.1-8b': 
         model_params = model1_params
-    elif model_type == 'mixtral-8x7b':
+    elif model_type == 'reka-flash':
         model_params = model2_params
     elif model_type == 'jamba-1.5-mini': 
         model_params = model3_params
@@ -245,7 +245,7 @@ def write_json(model_type, repo_owner, repo_name, readme_original, evaluation_or
     # check value of model_type to specify the directory for data saving
     if model_type == 'llama3.1-8b': 
         model_dir = 'model1'
-    elif model_type == 'mixtral-8x7b':
+    elif model_type == 'reka-flash':
         model_dir = 'model2'
     elif model_type == 'jamba-1.5-mini': 
         model_dir = 'model3'
@@ -269,7 +269,7 @@ def write_postprocessed_repo(repo_owner, repo_name, model_type):
     # check value of model_type to specify the path
     if model_type == 'llama3.1-8b': 
         path = '../data/helper/helper_readme_eval_processed_m1.json'
-    elif model_type == 'mixtral-8x7b': 
+    elif model_type == 'reka-flash': 
         path = '../data/helper/helper_readme_eval_processed_m2.json'
     elif model_type == 'jamba-1.5-mini':
         path = '../data/helper/helper_readme_eval_processed_m3.json'
@@ -403,7 +403,7 @@ print('---------------------------------------------')
 # create repo_list from df, each row of the df is represented as tuple (repo_owner, repo_name) 
 repo_list = [(row.repo_owner, row.repo_name) for row in df.itertuples()]
 
-num_of_all_tokens = 2886398 # number of processed tokens # new day --> 0
+num_of_all_tokens = 1870 # number of processed tokens # new day --> 0
 #cnt = 0 # for testing
 flag_break_loops = False # flag to break all loops
 
@@ -464,7 +464,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
         print('---------------------------------------------')
         print(f'Number of processed tokens: {num_of_all_tokens}')
-       # cnt += 1 # for testing
+        #cnt += 1 # for testing
 
 
         print('---------------------------------------------')

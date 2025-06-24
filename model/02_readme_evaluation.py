@@ -48,11 +48,20 @@ def check_readme_eval_processed(repo_owner, repo_name, model_type):
     '''
     # check value of model_type to define path
     if model_type == 'llama3.1-8b': 
-        path = '../data/helper/helper_readme_eval_processed_m1.json'
+        # path = '../data/helper/helper_readme_eval_processed_m1_lama.json'
+        path = '../data/helper/helper_readme_eval_processed_m1_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m1_lama_mod.json'
+        # path = '../data/helper/helper_readme_eval_processed_m1_jamba_mod.json'
     elif model_type == 'reka-flash':
-        path = '../data/helper/helper_readme_eval_processed_m2.json'
+        # path = '../data/helper/helper_readme_eval_processed_m2_lama.json'
+        path = '../data/helper/helper_readme_eval_processed_m2_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m2_lama_mod.json'
+        # path = '../data/helper/helper_readme_eval_processed_m2_jamba_mod.json'
     elif model_type == 'jamba-1.5-mini':
-        path = '../data/helper/helper_readme_eval_processed_m3.json'
+        # path = '../data/helper/helper_readme_eval_processed_m3_lama.json'
+        path = '../data/helper/helper_readme_eval_processed_m3_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m3_lama_mod.json'
+        # path = '../data/helper/helper_readme_eval_processed_m3_jamba_mod.json'
 
     try: # try to open documentation file
         repo_to_check = [repo_owner, repo_name] # list with two values --> repo to check
@@ -106,35 +115,6 @@ def write_evaluation_prompt(repo_name, input_txt):
     ''' 
 
     return prompt_evaluation
-
-
-# Snowflake limits the number of processing tokens per day in the free trail (1 credit for AI functions per day). https://docs.snowflake.com/en/user-guide/admin-trial-account
-# There are SQL statements which calcualate the number of tokens but these compuations also requiere credits.
-# To save credits because they are needed for the summary and README creation the following function was build.
-# Dependencies: helper_count_tokens.ipynb
-# def estimate_tokens(num_of_chars, model_type):
-#     '''
-#     Function to estimate the number of input tokens from the given number of characters.
-
-#     Args:
-#         num_of_chars: Number of characters of the input text.
-    
-#     Retrun:
-#         num_of_tokens
-#     '''
-#     if model_type == 'llama3.1-8b':
-#         divisor = 4
-#     elif model_type == 'm2':
-#         divisor = 5 # noch anpassen
-#     else:
-#         divisor = 6 # noch anpassen
-
-#     # see helper_count_tokens.ipynb for derivation of value 4
-#     num_of_tokens = math.floor(num_of_chars / divisor) # divide num_of_chars through and get largest integer less or equal to x 4 # estimation 4 characters per token
-#     num_of_tokens += 100 # Snowflake needs additional tokens for processing. The number of addtional tokens is not specified so this value is a guess. (https://docs.snowflake.com/en/sql-reference/functions/count_tokens-snowflake-cortex)
-
-#     print(f'Number of guessed tokens for current repo: {num_of_tokens} (including addtional guess for Snowflake tokens)')
-#     return num_of_tokens
 
 
 def send_query(prompt_evaluation, model_type):
@@ -250,7 +230,11 @@ def write_json(model_type, repo_owner, repo_name, readme_original, evaluation_or
     elif model_type == 'jamba-1.5-mini': 
         model_dir = 'model3'
 
-    with open(f'../data/output_evaluation_data/{model_dir}/{repo_owner}_{repo_name}_evaluation_output.json', 'w') as file: # create new JSON file for GitHub repository
+    # path = f'../data/output_evaluation_data_lama/{model_dir}/{repo_owner}_{repo_name}_evaluation_output.json'
+    path = f'../data/output_evaluation_data_jamba/{model_dir}/{repo_owner}_{repo_name}_evaluation_output_2.json'
+    # path = f'../data/output_evaluation_data_lama_mod/{model_dir}/{repo_owner}_{repo_name}_evaluation_output_mod.json'
+    # path = f'../data/output_evaluation_data_jamba_mod/{model_dir}/{repo_owner}_{repo_name}_evaluation_output_2_mod.json'
+    with open(path, 'w') as file: # create new JSON file for GitHub repository
         json.dump(tmp_json, file) # write tmp_json to new file
 
 
@@ -268,11 +252,20 @@ def write_postprocessed_repo(repo_owner, repo_name, model_type):
     '''
     # check value of model_type to specify the path
     if model_type == 'llama3.1-8b': 
-        path = '../data/helper/helper_readme_eval_processed_m1.json'
+        # path = '../data/helper/helper_readme_eval_processed_m1_lama.json'
+        path = '../data/helper/helper_readme_eval_processed_m1_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m1_lama_mod.json'
+        # path = '../data/helper/helper_readme_eval_processed_m1_jamba_mod.json'
     elif model_type == 'reka-flash': 
-        path = '../data/helper/helper_readme_eval_processed_m2.json'
+        # path = '../data/helper/helper_readme_eval_processed_m2_lama.json'
+        path = '../data/helper/helper_readme_eval_processed_m2_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m2_lama_mod.json'
+        # path = '../data/helper/helper_readme_eval_processed_m2_jamba_mod.json'
     elif model_type == 'jamba-1.5-mini':
-        path = '../data/helper/helper_readme_eval_processed_m3.json'
+        # path = '../data/helper/helper_readme_eval_processed_m3_lama.json'
+        path = '../data/helper/helper_readme_eval_processed_m3_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m3_lama_mod.json'
+        # path = '../data/helper/helper_readme_eval_processed_m3_jamba_mod.json'
 
     try: # try to open documentation file
         with open(path, 'r') as file: # open and load file
@@ -304,7 +297,7 @@ snowflake_session = Session.builder.configs(connection_params).create() # build 
 print('Snowflake sessions is build.')
 print('---------------------------------------------')
 
-model_type = 'llama3.1-8b'
+model_type = 'jamba-1.5-mini'
 # 'reka-flash' 0.45 credit / 1 millionen token --> 2.2 million tokens per day (model2)
 # 'llama3.1-8b' 0.19 credit / 1 million token --> 5.26 million tokens per day (model1)
 # 'jamba-1.5-mini' 0.10 credit / 1 million token --> 10 million tokens per day (model3)
@@ -343,12 +336,12 @@ cnt = 0 # for testing
 flag_break_loops = False # flag to break all loops
 
 for i in repo_list: # iterate through all entries in repo_list --> each tuple represent a GitHub repository
-    if cnt >= 2: # for testing
+    if cnt >= 51: # for testing
         break
     # >= 5200000 --> llama3.1-8b
     # >= 2200000 --> reka-flash
     # >= 9000000 --> jamba-1.5-mini
-    if num_of_all_tokens >= 2100000: 
+    if num_of_all_tokens >= 5200000: 
             print('Number of tokens for daily processing reached. Continue at the next day.')
             print('---------------------------------------------')
             break # if num_of_all_tokens >= 5200000 the loop should bread to prevent computing errors from Snowflake
@@ -359,7 +352,11 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
         repo_owner = i[0] # set repo_owner to i[0]    
 
         # evaluation for generated readme
-        readme_generated_data = open_json(path=f'../data/output_readme_data/{repo_owner}_{repo_name}_output.json') # call open_json()
+        # path = f'../data/output_readme_data_lama/{repo_owner}_{repo_name}_output.json'
+        path = f'../data/output_readme_data_jamba/{repo_owner}_{repo_name}_output_2.json'
+        # path = f'../data/output_readme_data_lama_mod/{repo_owner}_{repo_name}_output_mod.json'
+        # path = f'../data/output_readme_data_jamba_mod/{repo_owner}_{repo_name}_output_2_mod.json'
+        readme_generated_data = open_json(path=path) # call open_json()
         readme_generated = readme_generated_data['readme'] # set variable for generated readme
 
         prompt_evaluation_generated = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_generated) # call write_evaluation_prompt()

@@ -1,5 +1,5 @@
 ## Author: Lisa Wallner
-# Description: This Python script creates multiple summaries and README's for the provided cleaned source code from multiple GitHub repositories.
+# Description: This Python script creates multiple summaries and README's for the provided cleaned source code from multiple GitHub repositories. This is the code for the second approach - the prompt has some small modifications.
 # Different prompts for the summary and the README creation are sent to an LLM via the Snowflake API and the results are stored in JSON files.
 # Dependencies:
 # - data/df_repos_counts_filtered.json
@@ -48,7 +48,7 @@ def check_repo_processed(repo_owner, repo_name):
     try: # try to open documentation file
         repo_to_check = [repo_owner, repo_name] # list with two values --> repo to check
         path = '../data/helper/repos_processed_lama_mod.json' # path for first try with llama3.1-8b
-        # path = '../data/helper/repos_processed_2.json' # path for second try with jamba-1.5-mini
+        # path = '../data/helper/repos_processed_jamba_mod.json' # path for second try with jamba-1.5-mini
         with open(path, 'r') as file: # open and load documentation file which contains information about previous processed repositories
             data_list = json.load(file) # save loaded content in variable data_list
     except json.JSONDecodeError: # raise exception if JSONDecodeError --> documentation file is empty
@@ -166,8 +166,6 @@ def send_query(prompt, type):
     # check value of variable type and set model_params for README or summary creation
     if type == 'summary': 
         model_params = model_summary_params
-    # elif type == 'subsummary':
-    #     model_params = model_subsummary_params
     elif type == 'readme':
         model_params = model_readme_params
 
@@ -206,8 +204,6 @@ def send_query(prompt, type):
         print(f'SQL query for executing the {type} prompt was successful.')
 
         # based on type return specific results
-        # if type == 'summary':
-        #     return message, total_tokens
         if type == 'readme':
             return message, total_tokens, completion_tokens, prompt_tokens
         else: 
@@ -247,7 +243,7 @@ def write_json(repo_owner, repo_name, summary_list, readme, readme_total_tokens,
     }
 
     path = f'../data/output_readme_data_lama_mod/{repo_owner}_{repo_name}_output_mod.json' # path for first try with lama
-    # path = f'../data/output_readme_data_jamba_mod/{repo_owner}_{repo_name}_output_2_mod.json' # path for second try with jamba-1.5-mini
+    # path = f'../data/output_readme_data_jamba_mod/{repo_owner}_{repo_name}_output_mod.json' # path for second try with jamba-1.5-mini
     with open(path, 'w') as file: # create new JSON file for GitHub repository
         json.dump(tmp_json, file) # write tmp_json to new file
 
@@ -264,7 +260,7 @@ def write_postprocessed_repo(repo_owner, repo_name):
         None
     '''
     path = '../data/helper/repos_processed_lama_mod.json' # path to documentation file
-    # path = ../data/helper/repos_processed_jamba_mod.json' # path to documentation file for second try with jamba-1.5-mini
+    # path = '../data/helper/repos_processed_jamba_mod.json' # path to documentation file for second try with jamba-1.5-mini
     try: # try to open documentation file
         with open(path, 'r') as file: # open and load file
             data_list = json.load(file) # save loaded content in data_list
@@ -281,10 +277,6 @@ def write_postprocessed_repo(repo_owner, repo_name):
 # load .env file
 load_dotenv(override=True)
 
-# log to huggingface
-# HF_TOKEN = os.environ['HUGGINGFACE']
-# login(HF_TOKEN)
-
 # set up connection parameters for Snowflake connection
 connection_params = {
     "account": os.environ['SNOWFLAKE_ACCOUNT'], # credentials
@@ -299,15 +291,15 @@ snowflake_session = Session.builder.configs(connection_params).create() # build 
 print('Snowflake sessions is build.')
 print('---------------------------------------------')
 
-# # define llm for summary
-# # characters_per_token: 3.99 -->  3.9 mio characters per day
-# # number of input tokens: 128,000
-# # number of output tokens: 8,192
-# model = 'llama3.1-8b'
-# # characters_per_token: 3.78 -->  3.7 mio characters per day
-# # number of input tokens: 256,000
-# # number of output tokens: 8,192
-model = 'jamba-1.5-mini'
+# define llm for summary
+# characters_per_token: 3.99 -->  3.9 mio characters per day
+# number of input tokens: 128,000
+# number of output tokens: 8,192
+model = 'llama3.1-8b'
+# characters_per_token: 3.78 -->  3.7 mio characters per day
+# number of input tokens: 256,000
+# number of output tokens: 8,192
+# model = 'jamba-1.5-mini'
 # specify llm parameters for summary creation
 model_summary_params = {
    'temperature': 0, # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex --> Internetrecherche hat keine anderen Empfehlungen ergeben
@@ -376,7 +368,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
             write_json(repo_owner=repo_owner, repo_name=repo_name, summary_list=summary_list, readme=readme, readme_total_tokens=readme_tokens, readme_completion_tokens=readme_completion_tokens, readme_prompt_tokens=readme_prompt_tokens) # call write_json()
             write_postprocessed_repo(repo_owner=repo_owner, repo_name=repo_name) # call write postprocessed_repo() to document progress
-            print(f'Summary and README for repository: "{repo_name}" from "{repo_owner}" successfully created.')
+            print(f'Summary and README for repository: "{repo_name}" from "{repo_owner}" successfully created. used model {model}')
 
             num_of_all_tokens += summary_tokens # increase num_of_all_tokens by summary_tokens
             num_of_all_tokens += readme_tokens # increase num_of_all_tokens by readme_tokens
@@ -390,7 +382,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
         print('---------------------------------------------')
     else: # if current repository is already processed continue with the next one
         continue
-    
+
 snowflake_session.close() # close snowflake session
 print('---------------------------------------------')
 print('Snowflake session is closed.')

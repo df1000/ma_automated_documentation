@@ -304,10 +304,10 @@ snowflake_session = Session.builder.configs(connection_params).create() # build 
 print('Snowflake sessions is build.')
 print('---------------------------------------------')
 
-model_type = 'reka-flash'
-# 'reka-flash' 0.45 credit / 1 millionen token --> 2.2 million tokens per day
-# 'llama3.1-8b' 0.19 credit / 1 million token --> 5.26 million tokens per day
-# 'jamba-1.5-mini' 0.10 credit / 1 million token --> 10 million tokens per day 
+model_type = 'llama3.1-8b'
+# 'reka-flash' 0.45 credit / 1 millionen token --> 2.2 million tokens per day (model2)
+# 'llama3.1-8b' 0.19 credit / 1 million token --> 5.26 million tokens per day (model1)
+# 'jamba-1.5-mini' 0.10 credit / 1 million token --> 10 million tokens per day (model3)
 
 # specify llm parameters for summary creation
 model1_params = {
@@ -338,13 +338,13 @@ print('---------------------------------------------')
 # create repo_list from df, each row of the df is represented as tuple (repo_owner, repo_name) 
 repo_list = [(row.repo_owner, row.repo_name) for row in df.itertuples()]
 
-num_of_all_tokens = 1870 # number of processed tokens # new day --> 0
-#cnt = 0 # for testing
+num_of_all_tokens = 0 # number of processed tokens # new day --> 0
+cnt = 0 # for testing
 flag_break_loops = False # flag to break all loops
 
 for i in repo_list: # iterate through all entries in repo_list --> each tuple represent a GitHub repository
-    # if cnt >= 1: # for testing
-    #     break
+    if cnt >= 2: # for testing
+        break
     # >= 5200000 --> llama3.1-8b
     # >= 2200000 --> reka-flash
     # >= 9000000 --> jamba-1.5-mini
@@ -399,7 +399,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
         print('---------------------------------------------')
         print(f'Number of processed tokens: {num_of_all_tokens}')
-        #cnt += 1 # for testing
+        cnt += 1 # for testing
 
 
         print('---------------------------------------------')

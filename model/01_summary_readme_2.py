@@ -49,9 +49,7 @@ def check_repo_processed(repo_owner, repo_name):
     '''
     try: # try to open documentation file
         repo_to_check = [repo_owner, repo_name] # list with two values --> repo to check
-        path = '../data/helper/repos_processed.json' # path for first try with llama3.1-8b
-        # path = '../data/helper/repos_processed_2.json' # path for second try with jamba-1.5-mini
-        with open(path, 'r') as file: # open and load documentation file which contains information about previous processed repositories
+        with open('../data/helper/repos_processed_2.json', 'r') as file: # open and load documentation file which contains information about previous processed repositories
             data_list = json.load(file) # save loaded content in variable data_list
     except json.JSONDecodeError: # raise exception if JSONDecodeError --> documentation file is empty
         data_list = [] # create new empty list
@@ -140,7 +138,7 @@ def write_readme_prompt(repo_name, repo_owner, summary_txt, license, requirement
 
         Use the following Markdown template and fill in each paragraph. 
 
-        ## Title
+        ## Title 
 
         ## Description
 
@@ -370,9 +368,7 @@ def write_json(repo_owner, repo_name, summary_list, readme, readme_total_tokens,
         }
     }
 
-    path = f'../data/output_readme_data/{repo_owner}_{repo_name}_output.json' # path for first try with lama3
-    # path = f'../data/output_readme_data_2/{repo_owner}_{repo_name}_output_2.json' # path for second try with jamba-1.5-mini
-    with open(path, 'w') as file: # create new JSON file for GitHub repository
+    with open(f'../data/output_readme_data_2/{repo_owner}_{repo_name}_output_2.json', 'w') as file: # create new JSON file for GitHub repository
         json.dump(tmp_json, file) # write tmp_json to new file
 
 
@@ -387,8 +383,7 @@ def write_postprocessed_repo(repo_owner, repo_name):
     Return:
         None
     '''
-    path = '../data/helper/repos_processed.json' # path to documentation file
-    # path = ../data/helper/repos_processed_2.json' # path to documentation file for second try with jamba-1.5-mini
+    path = '../data/helper/repos_processed_2.json' # path to documentation file
     try: # try to open documentation file
         with open(path, 'r') as file: # open and load file
             data_list = json.load(file) # save loaded content in data_list
@@ -448,8 +443,7 @@ print('---------------------------------------------')
 # # characters_per_token: 3.99 -->  3.9 mio characters per day
 # # number of input tokens: 128,000
 # # number of output tokens: 8,192
-model = 'llama3.1-8b'
-# model = 'jamba-1.5-mini'
+model = 'jamba-1.5-mini'
 # specify llm parameters for summary creation
 model_summary_params = {
    'temperature': 0, # default: 0 https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex --> Internetrecherche hat keine anderen Empfehlungen ergeben
@@ -482,15 +476,14 @@ print('---------------------------------------------')
 # create repo_list from df, each row of the df is represented as tuple (repo_owner, repo_name, source_code_cleanded_comments) 
 repo_list = [(row.repo_owner, row.repo_name, row.source_code_cleaned_comments) for row in df.itertuples()]
 
-num_of_all_tokens = 0 # number of processed tokens # new day --> 0
-#cnt = 0 # for testing
+num_of_all_tokens = 4430 # number of processed tokens # new day --> 0
+cnt = 0 # for testing
 flag_break_loops = False # flag to break all loops, if number of subprompts is to big to process on one day
 
 for i in repo_list: # iterate through all entries in repo_list --> each tuple represent a GitHub repository
-    # if cnt >= 1: # for testing
-    #     break
-    if num_of_all_tokens >= 5200000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
-    # if num_of_all_tokens >= 9000000: # for second try with jamba-1.5-mini --> 1 credit / 0.10 millionen tokens per credit --> 10 millionen tokens per day
+    if cnt >= 51: # for testing
+        break
+    if num_of_all_tokens >= 9000000: # 1 credit / 0.19 million tokens per credit --> 5.26 million tokens per day
             print('Number of tokens for daily processing reached. Continue at the next day.')
             print('---------------------------------------------')
             break # if num_of_all_tokens >= 5200000 the loop should bread to prevent computing errors from Snowflake
@@ -513,8 +506,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
         
         summary_list = [] # create empty list to save future generated summaries
 
-        if guess_of_tokens < 120000: # check if guess_of_tokens is smaller then 120,000 
-        #if guess_of_tokens < 200000: # for second try with jamba-1.5-mini
+        if guess_of_tokens < 200000: # check if guess_of_tokens is smaller then 256,000
             # prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
             # print(f'Summary prompt for "{repo_name}" is created.')
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary') # call send_query() to create summary for repository
@@ -532,7 +524,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
             num_of_all_tokens += readme_tokens # increase num_of_all_tokens by readme_tokens
             print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
-            #cnt += 1 # for testing
+            cnt += 1 # for testing
 
         else: # if guess_of_tokens is not smaller then 126,000 --> subsummaries are required
             print(f'Number of tokens of repository: "{repo_name}" to big to preprocess in single query. Subprompts are requiered.')
@@ -606,7 +598,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
             num_of_all_tokens += readme_tokens # increase num_of_all_tokens by readme_tokens
             print('---------------------------------------------')
             print(f'Number of processed tokens: {num_of_all_tokens}')
-            #cnt += 1 # for testing
+            cnt += 1 # for testing
 
         print('---------------------------------------------')
     else: # if current repository is already processed continue with the next one

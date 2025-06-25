@@ -49,19 +49,19 @@ def check_readme_eval_processed(repo_owner, repo_name, model_type):
     # check value of model_type to define path
     if model_type == 'llama3.1-8b': 
         # path = '../data/helper/helper_readme_eval_processed_m1_lama.json'
-        path = '../data/helper/helper_readme_eval_processed_m1_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m1_jamba.json'
         # path = '../data/helper/helper_readme_eval_processed_m1_lama_mod.json'
-        # path = '../data/helper/helper_readme_eval_processed_m1_jamba_mod.json'
+        path = '../data/helper/helper_readme_eval_processed_m1_jamba_mod.json'
     elif model_type == 'reka-flash':
         # path = '../data/helper/helper_readme_eval_processed_m2_lama.json'
-        path = '../data/helper/helper_readme_eval_processed_m2_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m2_jamba.json'
         # path = '../data/helper/helper_readme_eval_processed_m2_lama_mod.json'
-        # path = '../data/helper/helper_readme_eval_processed_m2_jamba_mod.json'
+        path = '../data/helper/helper_readme_eval_processed_m2_jamba_mod.json'
     elif model_type == 'jamba-1.5-mini':
         # path = '../data/helper/helper_readme_eval_processed_m3_lama.json'
-        path = '../data/helper/helper_readme_eval_processed_m3_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m3_jamba.json'
         # path = '../data/helper/helper_readme_eval_processed_m3_lama_mod.json'
-        # path = '../data/helper/helper_readme_eval_processed_m3_jamba_mod.json'
+        path = '../data/helper/helper_readme_eval_processed_m3_jamba_mod.json'
 
     try: # try to open documentation file
         repo_to_check = [repo_owner, repo_name] # list with two values --> repo to check
@@ -231,9 +231,9 @@ def write_json(model_type, repo_owner, repo_name, readme_original, evaluation_or
         model_dir = 'model3'
 
     # path = f'../data/output_evaluation_data_lama/{model_dir}/{repo_owner}_{repo_name}_evaluation_output.json'
-    path = f'../data/output_evaluation_data_jamba/{model_dir}/{repo_owner}_{repo_name}_evaluation_output_2.json'
+    # path = f'../data/output_evaluation_data_jamba/{model_dir}/{repo_owner}_{repo_name}_evaluation_output_2.json'
     # path = f'../data/output_evaluation_data_lama_mod/{model_dir}/{repo_owner}_{repo_name}_evaluation_output_mod.json'
-    # path = f'../data/output_evaluation_data_jamba_mod/{model_dir}/{repo_owner}_{repo_name}_evaluation_output_2_mod.json'
+    path = f'../data/output_evaluation_data_jamba_mod/{model_dir}/{repo_owner}_{repo_name}_evaluation_output_2_mod.json'
     with open(path, 'w') as file: # create new JSON file for GitHub repository
         json.dump(tmp_json, file) # write tmp_json to new file
 
@@ -253,19 +253,19 @@ def write_postprocessed_repo(repo_owner, repo_name, model_type):
     # check value of model_type to specify the path
     if model_type == 'llama3.1-8b': 
         # path = '../data/helper/helper_readme_eval_processed_m1_lama.json'
-        path = '../data/helper/helper_readme_eval_processed_m1_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m1_jamba.json'
         # path = '../data/helper/helper_readme_eval_processed_m1_lama_mod.json'
-        # path = '../data/helper/helper_readme_eval_processed_m1_jamba_mod.json'
+        path = '../data/helper/helper_readme_eval_processed_m1_jamba_mod.json'
     elif model_type == 'reka-flash': 
         # path = '../data/helper/helper_readme_eval_processed_m2_lama.json'
-        path = '../data/helper/helper_readme_eval_processed_m2_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m2_jamba.json'
         # path = '../data/helper/helper_readme_eval_processed_m2_lama_mod.json'
-        # path = '../data/helper/helper_readme_eval_processed_m2_jamba_mod.json'
+        path = '../data/helper/helper_readme_eval_processed_m2_jamba_mod.json'
     elif model_type == 'jamba-1.5-mini':
         # path = '../data/helper/helper_readme_eval_processed_m3_lama.json'
-        path = '../data/helper/helper_readme_eval_processed_m3_jamba.json'
+        # path = '../data/helper/helper_readme_eval_processed_m3_jamba.json'
         # path = '../data/helper/helper_readme_eval_processed_m3_lama_mod.json'
-        # path = '../data/helper/helper_readme_eval_processed_m3_jamba_mod.json'
+        path = '../data/helper/helper_readme_eval_processed_m3_jamba_mod.json'
 
     try: # try to open documentation file
         with open(path, 'r') as file: # open and load file
@@ -298,8 +298,8 @@ print('Snowflake sessions is build.')
 print('---------------------------------------------')
 
 model_type = 'jamba-1.5-mini'
-# 'reka-flash' 0.45 credit / 1 millionen token --> 2.2 million tokens per day (model2)
 # 'llama3.1-8b' 0.19 credit / 1 million token --> 5.26 million tokens per day (model1)
+# 'reka-flash' 0.45 credit / 1 millionen token --> 2.2 million tokens per day (model2)
 # 'jamba-1.5-mini' 0.10 credit / 1 million token --> 10 million tokens per day (model3)
 
 # specify llm parameters for summary creation
@@ -334,9 +334,10 @@ repo_list = [(row.repo_owner, row.repo_name) for row in df.itertuples()]
 num_of_all_tokens = 0 # number of processed tokens # new day --> 0
 cnt = 0 # for testing
 flag_break_loops = False # flag to break all loops
+original_readme_processed = True # flag to check if original readme files are already processed
 
 for i in repo_list: # iterate through all entries in repo_list --> each tuple represent a GitHub repository
-    if cnt >= 51: # for testing
+    if cnt >= 52: # for testing
         break
     # >= 5200000 --> llama3.1-8b
     # >= 2200000 --> reka-flash
@@ -353,9 +354,9 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
         # evaluation for generated readme
         # path = f'../data/output_readme_data_lama/{repo_owner}_{repo_name}_output.json'
-        path = f'../data/output_readme_data_jamba/{repo_owner}_{repo_name}_output_2.json'
+        # path = f'../data/output_readme_data_jamba/{repo_owner}_{repo_name}_output_2.json'
         # path = f'../data/output_readme_data_lama_mod/{repo_owner}_{repo_name}_output_mod.json'
-        # path = f'../data/output_readme_data_jamba_mod/{repo_owner}_{repo_name}_output_2_mod.json'
+        path = f'../data/output_readme_data_jamba_mod/{repo_owner}_{repo_name}_output_mod.json'
         readme_generated_data = open_json(path=path) # call open_json()
         readme_generated = readme_generated_data['readme'] # set variable for generated readme
 
@@ -364,14 +365,23 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
         score_generated_dir = [] #clean_score(evaluation_generated, model_type) # call clean_score() 
         print(f'Evaluation for generated README successfully created.')
 
-        # evaluation for original readme
-        readme_original_data = open_json(path=f'../data/input_readme_data/{repo_owner}_{repo_name}.json') # call open_json()
-        readme_original = readme_original_data['readme'] # set variable for original readme 
+        if original_readme_processed:
+            print('Original readme file is already evaluated.')
+  
+            readme_original='already processed', 
+            evaluation_original='already processed', 
+            evaluation_original_tokens='already processed',
+            score_original_dir='already processed',
+        
+        else:
+            # evaluation for original readme
+            readme_original_data = open_json(path=f'../data/input_readme_data/{repo_owner}_{repo_name}.json') # call open_json()
+            readme_original = readme_original_data['readme'] # set variable for original readme 
 
-        prompt_evaluation_original = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_original) # call write_evaluation_prompt()
-        evaluation_original, evaluation_original_tokens, evaluation_original_total_tokens = send_query(prompt_evaluation=prompt_evaluation_original, model_type=model_type) # call send_query() to create evaluation for readme
-        score_original_dir = [] #clean_score(evaluation_original, model_type) # call clean_score()
-        print(f'Evaluation for original README successfully created.')
+            prompt_evaluation_original = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_original) # call write_evaluation_prompt()
+            evaluation_original, evaluation_original_tokens, evaluation_original_total_tokens = send_query(prompt_evaluation=prompt_evaluation_original, model_type=model_type) # call send_query() to create evaluation for readme
+            score_original_dir = [] #clean_score(evaluation_original, model_type) # call clean_score()
+            print(f'Evaluation for original README successfully created.')
 
         # save evaluation and call write_json()
         write_json(
@@ -392,7 +402,8 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
         print(f'Evaluations for repository "{repo_name}" from "{repo_owner}" successfully created.')
 
         num_of_all_tokens += evaluation_generated_total_tokens # increase num_of_all_tokens by evaluation_generated_total_tokens
-        num_of_all_tokens += evaluation_original_total_tokens # increase num_of_all_tokens by evaluation_original_total_tokens
+        if not original_readme_processed:
+            num_of_all_tokens += evaluation_original_total_tokens # increase num_of_all_tokens by evaluation_original_total_tokens
 
         print('---------------------------------------------')
         print(f'Number of processed tokens: {num_of_all_tokens}')

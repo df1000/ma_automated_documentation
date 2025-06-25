@@ -4,7 +4,7 @@
 
 import os
 
-directory = '../data/output_readme_data_jamba_mod'
+directory = '../data/output_evaluation_data_lama_mod/model2'
 #directory = '../data/output_evaluation_data_/model3'
 file_count = len([f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))])
 

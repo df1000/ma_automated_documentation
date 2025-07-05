@@ -6,11 +6,11 @@ import zipfile
 import os
 
 # Path to the original ZIP file
-original_zip = "../data/raw_data_zip/raw_data_no_range.zip"
+original_zip = "../data/repo_data_zip/jd_tenacity_2025-06-07_13-20-35.zip"
 
 
 # Directory to extract the contents
-extracted_dir = "../data/raw_data/"
+extracted_dir = "../data/repo_data_unzip/"
 
 # Extract all files
 with zipfile.ZipFile(original_zip, 'r') as zip_ref:

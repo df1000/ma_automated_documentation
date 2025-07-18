@@ -515,8 +515,10 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
         if guess_of_tokens < 120000: # check if guess_of_tokens is smaller then 120,000 
         #if guess_of_tokens < 200000: # for second try with jamba-1.5-mini
+            # vermutlich nicht relevant -->
             # prompt_summary = write_summary_prompt(repo_name=repo_name, input_txt=source_code_cleaned_comments)
             # print(f'Summary prompt for "{repo_name}" is created.')
+            # <--
             summary, summary_tokens = send_query(prompt=prompt_summary, type='summary') # call send_query() to create summary for repository
             summary_list.append(summary) # append summary to summary_list
 
@@ -534,7 +536,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
             print(f'Number of processed tokens: {num_of_all_tokens}')
             #cnt += 1 # for testing
 
-        else: # if guess_of_tokens is not smaller then 126,000 --> subsummaries are required
+        else: # if guess_of_tokens is bigger then 126,000 --> subsummaries are required
             print(f'Number of tokens of repository: "{repo_name}" to big to preprocess in single query. Subprompts are requiered.')
 
             if check_repo_for_subprompts(repo_owner=repo_owner, repo_name=repo_name): # call check_repo_for_subprompts() to check if the process of summary generation already started (e.g. yesterday)

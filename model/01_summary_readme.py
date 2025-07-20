@@ -432,11 +432,11 @@ login(HF_TOKEN)
 
 # set up connection parameters for Snowflake connection
 connection_params = {
-    "account": os.environ['SNOWFLAKE_ACCOUNT'], # credentials
-    "user": os.environ['SNOWFLAKE_USER'], # credentials
-    "password": os.environ['SNOWFLAKE_USER_PASSWORD'], # credentials
-    "role": 'SYSADMIN', # specifiy Snowflake role
-    "warehouse": 'COMPUTE_WH', # choose warehouse for computation
+    'account': os.environ['SNOWFLAKE_ACCOUNT'], # credentials
+    'user': os.environ['SNOWFLAKE_USER'], # credentials
+    'password': os.environ['SNOWFLAKE_USER_PASSWORD'], # credentials
+    'role': 'SYSADMIN', # specifiy Snowflake role
+    'warehouse': 'COMPUTE_WH', # choose warehouse for computation
     'paramstyle': 'qmark' # set parameter style --> ?
 }
 

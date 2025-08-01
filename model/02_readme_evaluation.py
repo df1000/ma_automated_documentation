@@ -1,4 +1,3 @@
-## Author: Lisa Wallner
 # Description: This Python script creates the evaluations for the original and genearted README files of multiple GitHub repositories.
 # Different prompts for evaluation (1 prompt for the generated README and 1 prompt for the original README) are sent to an LLM via the 
 # Snowflake API and the results are stored in JSON files.
@@ -98,7 +97,7 @@ def write_evaluation_prompt(repo_name, input_txt):
         - q5: Who maintains and contributes to the project?
     How well does the provided README offers answers to each question? Score each question on a scale from 1 to 5, 
     in which 1 means "insufficient", 2 "sufficienct", 3 "satisfactory", 4 "good" and 5 "very good". Provide your chosen score with a short explanation.
-    A good indication of a high score is: 1) there is a section or paragraph where ab answer of the questions is clearly provided,
+    A good indication of a high score is: 1) there is a section or paragraph where an answer of the questions is clearly provided,
     2) the content of the README is clearly structured and understandable 3) that a developer who reads the README understands the purpose of the project.
     You're not allowed to skip a question or add any small talk!
     Structure your response in the following format:

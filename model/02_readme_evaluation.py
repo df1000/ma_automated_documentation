@@ -361,7 +361,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
         prompt_evaluation_generated = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_generated) # call write_evaluation_prompt()
         evaluation_generated, evaluation_generated_tokens, evaluation_generated_total_tokens = send_query(prompt_evaluation=prompt_evaluation_generated, model_type=model_type) # call send_query() to create evaluation for readme
-        score_generated_dir = [] #clean_score(evaluation_generated, model_type) # call clean_score() 
+        score_generated_dir = [] # extracting of score is applied in file ../evaluate_results/helper_clean_score_mX.ipynb #clean_score(evaluation_generated, model_type) # call clean_score() 
         print(f'Evaluation for generated README successfully created.')
 
         if original_readme_processed:
@@ -379,7 +379,7 @@ for i in repo_list: # iterate through all entries in repo_list --> each tuple re
 
             prompt_evaluation_original = write_evaluation_prompt(repo_name=repo_name, input_txt=readme_original) # call write_evaluation_prompt()
             evaluation_original, evaluation_original_tokens, evaluation_original_total_tokens = send_query(prompt_evaluation=prompt_evaluation_original, model_type=model_type) # call send_query() to create evaluation for readme
-            score_original_dir = [] #clean_score(evaluation_original, model_type) # call clean_score()
+            score_original_dir = [] # extracting of score is applied in file ../evaluate_results/helper_clean_score_mX.ipynb #clean_score(evaluation_original, model_type) # call clean_score()
             print(f'Evaluation for original README successfully created.')
 
         # save evaluation and call write_json()

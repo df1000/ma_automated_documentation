@@ -1,4 +1,3 @@
-## Author: Lisa Wallner
 # Description: This Python script creates multiple summaries and README's for the provided cleaned source code from multiple GitHub repositories.
 # Different prompts for the summary and the README creation are sent to an LLM via the Snowflake API and the results are stored in JSON files.
 # Dependencies:
@@ -370,8 +369,8 @@ def write_json(repo_owner, repo_name, summary_list, readme, readme_total_tokens,
         }
     }
 
-    path = f'../data/output_readme_data/{repo_owner}_{repo_name}_output.json' # path for first try with lama3
-    # path = f'../data/output_readme_data_2/{repo_owner}_{repo_name}_output_2.json' # path for second try with jamba-1.5-mini
+    path = f'../data/output_readme_data_lama/{repo_owner}_{repo_name}_output.json' # path for first try with lama3
+    # path = f'../data/output_readme_data_jamba/{repo_owner}_{repo_name}_output_2.json' # path for second try with jamba-1.5-mini
     with open(path, 'w') as file: # create new JSON file for GitHub repository
         json.dump(tmp_json, file) # write tmp_json to new file
 
@@ -387,8 +386,8 @@ def write_postprocessed_repo(repo_owner, repo_name):
     Return:
         None
     '''
-    path = '../data/helper/repos_processed.json' # path to documentation file
-    # path = ../data/helper/repos_processed_2.json' # path to documentation file for second try with jamba-1.5-mini
+    path = '../data/helper/readme/repos_processed.json' # path to documentation file
+    # path = ../data/helper/readme/repos_processed_2.json' # path to documentation file for second try with jamba-1.5-mini
     try: # try to open documentation file
         with open(path, 'r') as file: # open and load file
             data_list = json.load(file) # save loaded content in data_list
@@ -432,11 +431,11 @@ login(HF_TOKEN)
 
 # set up connection parameters for Snowflake connection
 connection_params = {
-    "account": os.environ['SNOWFLAKE_ACCOUNT'], # credentials
-    "user": os.environ['SNOWFLAKE_USER'], # credentials
-    "password": os.environ['SNOWFLAKE_USER_PASSWORD'], # credentials
-    "role": 'SYSADMIN', # specifiy Snowflake role
-    "warehouse": 'COMPUTE_WH', # choose warehouse for computation
+    'account': os.environ['SNOWFLAKE_ACCOUNT'], # credentials
+    'user': os.environ['SNOWFLAKE_USER'], # credentials
+    'password': os.environ['SNOWFLAKE_USER_PASSWORD'], # credentials
+    'role': 'SYSADMIN', # specifiy Snowflake role
+    'warehouse': 'COMPUTE_WH', # choose warehouse for computation
     'paramstyle': 'qmark' # set parameter style --> ?
 }
 

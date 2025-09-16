@@ -106,9 +106,9 @@ def get_response(stars, num_of_requests):
 # https://api.github.com/search/repositories?q=language:python --> repo with maximum number of stars: https://github.com/public-apis/public-apis/ --> stars = 335520 (request date: 2025-04-13)
 
 # for further work metadata of 1000 repos in total will be requested and saved
-max_stars = 22196 # 75% quantil of first response from GitHub api --> for further analysis all repos from 22196 up to 335520 stars will used
+max_stars = 21947 # 75% quantil of first response from GitHub api --> for further analysis all repos from 22196 up to 335520 stars will used
 start = 0 # minimum of stars
-step = 29 # step size for iteration
+step = 28 # step size for iteration
 stars_with_no_response = [] # empty list for page numbers with no response
 repo_data = [] # empty list to save repo data
 num_of_request = 0
@@ -116,7 +116,7 @@ num_of_request = 0
 # list with checkpoints
 check = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 795]
 
-# iterate over range of stars 0-21947 in step size 29 (previous 28)
+# iterate over range of stars 0-21947 in step size 28
 for stars in range(start, max_stars+1, step):
     if stars >= 21947: # check if stars >= 21947
         # save metadata of last iterations in json and break loop to stop script

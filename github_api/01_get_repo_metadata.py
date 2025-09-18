@@ -1,4 +1,3 @@
-# Author: Lisa Wallner
 # Description: In this Python script metadata of multiple GitHub repositories via the API will be requested. 
 # Based on the previous request in 00_get_repo_metadata.py multiple repositories with multiple stars were collected. 
 # Dependencies: 

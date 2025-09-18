@@ -1,4 +1,3 @@
-# Author: Lisa Wallner
 # Description: In this Python script the content of the previous loaded GitHub repositories are cleaned and prepared for the next step - the summary and README creation.
 # Depedencies:
 #   - data/repo_data_zip/

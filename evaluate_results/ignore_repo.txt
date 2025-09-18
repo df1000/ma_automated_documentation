@@ -1,0 +1,8 @@
+github_user, github_repo_name; explanation
+ccxt, ccxt; written in Chinese
+bbfamily, abu; written in Java Script
+lonePatient, awsome-pretrained-chinese-nlp-models; no source code
+Lcry, a-sheep-assistant; no source code
+eeeeeeeeeeeeeeeeeeeeeeeeeeeeee_eeeeeeeeeeeeeeeeeeeeee; repository contains no README and no source code
+diego-vicente, som-tsp; repository contains no README 
+Taniiishk, Rock-Paper-Scissors-Game; no license

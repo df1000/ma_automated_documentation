@@ -1,4 +1,3 @@
-## Author: Lisa Wallner
 # Description: This Python script creates multiple summaries and README's for the provided cleaned source code from multiple GitHub repositories. This is the code for the second approach - the prompt has some small modifications.
 # Different prompts for the summary and the README creation are sent to an LLM via the Snowflake API and the results are stored in JSON files.
 # Dependencies:

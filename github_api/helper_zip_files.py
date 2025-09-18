@@ -1,4 +1,4 @@
-#
+# Description: This file helps to zip data.
 # Hint: If lines are created with support of a Large Language Model or the code is taken from another source, you find following hint at the end of the line:
 #       (generated with Microsoft Copilot) or (source: link_to_source)
 
@@ -27,4 +27,5 @@ for filename in os.listdir(directory):
     if os.path.isfile(file_path):  # Check if it's a file
         os.remove(file_path)  # Delete the file
 
-# lisa-linux@LAPTOP-VLI78DI6:~/stuff/ma_automated_documentation/github_api$ python3 helper_zip_files.py
+# command for cli
+# python3 helper_zip_files.py

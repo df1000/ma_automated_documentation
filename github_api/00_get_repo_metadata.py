@@ -1,7 +1,7 @@
-# Author: Lisa Wallner
 # Description: In this Python script metadata of multiple GitHub repositories via the API will be requested. With this script the first
 # request was executed to collect repositories with a star range from maximum number of stars ascending --> 1050 results.
 # Further analysis are processed in the following scripts:
+# - preprocessing/00_repos_metadata.ipynb
 # - preprocessing/01_repos_metadata.ipynb
 # - preprocessing/02_analyse_repos_metadata.ipynb
 #
@@ -40,7 +40,8 @@ def get_response(page):
         # set timestamp as str
         timestamp = datetime.now(tz=None).strftime('%Y-%m-%d_%H-%H-%S')
         # save data from response as json in data/
-        with open(f'../data/raw_data/{page}_multiple_github_repos_page_{timestamp}.json', 'w') as file:
+        with open(f'../data/raw_data/no_range/{page}_multiple_github_repos_page_{timestamp}.json', 'w') as file:
+        # with open(f'../data/raw_data/{page}_multiple_github_repos_page_{timestamp}.json', 'w') as file:
             json.dump(data, file)
 
 

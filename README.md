@@ -1,4 +1,4 @@
-# automated_documentation  
+# ma_automated_documentation  
 
 ## Description  
 This repository contains the source code for the thesis *Intelligent Documentation: Automated Generation of GitHub README Files with Large Language Models and Dynamic Prompts*.  

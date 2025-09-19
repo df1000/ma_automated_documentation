@@ -9,6 +9,8 @@ data/
 pngs/
 pngs_ma/
 pngs_old/
+
+!img/
 !img/flow_readme_creation.png
 
 hints/
